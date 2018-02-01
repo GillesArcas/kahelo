@@ -2161,7 +2161,8 @@ class HTTPServerLayer(object):
         if self.server is None:
             return
         self.server.shutdown()
-        self.server_thread.join()
+        self.server_thread.join(30) # 30 -> timeout
+
 
 def do_server(db_name, port, options):
     server = kahelo.HTTPServerLayer()
