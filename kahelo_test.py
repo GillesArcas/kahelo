@@ -94,8 +94,10 @@ def main(verbose = False):
         os.remove('test.project')
         os.remove(kahelo.configfilename())
         os.remove(kahelo.configfilename()+'.advanced')
-        os.rename(kahelo.configfilename()+'.backup', kahelo.configfilename())
-        os.rename(kahelo.configfilename()+'.advanced.backup', kahelo.configfilename()+'.advanced')
+        if os.path.exists(kahelo.configfilename()+'.backup'):
+            os.rename(kahelo.configfilename()+'.backup', kahelo.configfilename())
+        if os.path.exists(kahelo.configfilename()+'.advanced.backup'):
+                os.rename(kahelo.configfilename()+'.advanced.backup', kahelo.configfilename()+'.advanced')
 
 
 GPX1 = """\
