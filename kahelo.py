@@ -2138,7 +2138,7 @@ class TileServerHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             if 'SHUTDOWN' in self.path:
                 self.send_response(200)
-                self.end_headers() # Remote end closed connection without response
+                self.end_headers()
                 keep_running = False
                 return
 

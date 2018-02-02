@@ -23,7 +23,7 @@ def main():
     if os.name == 'nt':
         mode = 4
     else:
-        mode = 1
+        mode = 3
 
     if mode == 1:
         # no window for subprocess, traces from server mixed with traces from client
@@ -42,18 +42,16 @@ def main():
         shell = True
         creationflags = subprocess.CREATE_NEW_CONSOLE
 
-    p = subprocess.Popen('python kahelo.py -server tests/easter.db', shell=shell, creationflags=creationflags)
+    p = subprocess.Popen('python ./kahelo.py -server tests/easter.db', shell=shell, creationflags=creationflags)
     url = 'http://127.0.0.1:80/{zoom}/{x}/{y}.jpg'
 
     # make sure tests are done with known configuration
-    if os.path.isfile('kahelo.config.backup'):
-        os.remove('kahelo.config.backup')
-    if os.path.isfile('kahelo.config.advanced.backup'):
-        os.remove('kahelo.config.advanced.backup')
-    os.rename('kahelo.config', 'kahelo.config.backup')
-    os.rename('kahelo.config.advanced', 'kahelo.config.advanced.backup')
-    kahelo.createconfig('kahelo.config', kahelo.DEFAULTS)
-    kahelo.createconfig('kahelo.config.advanced', kahelo.DEFAULTS_ADVANCED)
+    config_filename = kahelo.configfilename()
+    advanced_config_filename = config_filename + '.advanced'
+    shutil.move(config_filename, config_filename + '.backup')
+    shutil.move(advanced_config_filename, advanced_config_filename + '.backup')
+    kahelo.createconfig(config_filename, kahelo.DEFAULTS)
+    kahelo.createconfig(advanced_config_filename, kahelo.DEFAULTS_ADVANCED)
 
     try:
         define_tile_sets()
@@ -84,10 +82,8 @@ def main():
         os.remove('test.gpx')
         os.remove('test2.gpx')
         os.remove('test.project')
-        os.remove('kahelo.config')
-        os.remove('kahelo.config.advanced')
-        os.rename('kahelo.config.backup', 'kahelo.config')
-        os.rename('kahelo.config.advanced.backup', 'kahelo.config.advanced')
+        shutil.move(config_filename + '.backup', config_filename)
+        shutil.move(advanced_config_filename + '.backup', advanced_config_filename)
 
 
 GPX1 = """\
@@ -202,18 +198,6 @@ def clean():
             os.remove(x)
 
 
-def resetconfig():
-    kahelo.createconfig('kahelo.config', kahelo.DEFAULTS)
-
-
-def setconfig(section, key, value):
-    config = kahelo.KaheloConfigParser()
-    config.read('kahelo.config')
-    config.set(section, key, value)
-    with open('kahelo.config', 'wt') as configfile:
-        config.write(configfile)
-
-
 # Tests
 
 
@@ -289,35 +273,35 @@ def test_db(url, db_format, tile_format, db_dest_format, tile_dest_format, trace
 
 
 def test_view():
-    resetconfig()
-    setconfig('view', 'draw_tracks', 'False')
-    setconfig('view', 'draw_tile_limits', 'False')
-    setconfig('view', 'draw_tile_width', 'False')
-    setconfig('view', 'draw_circles', 'False')
+    kahelo.resetconfig()
+    kahelo.setconfig('view', 'draw_tracks', 'False')
+    kahelo.setconfig('view', 'draw_tile_limits', 'False')
+    kahelo.setconfig('view', 'draw_tile_width', 'False')
+    kahelo.setconfig('view', 'draw_circles', 'False')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12a.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
     check('check view 1', compare_files(os.path.join('tests', 'easter12a.jpg'), 'test.jpg'))
 
-    setconfig('view', 'draw_tracks', 'True')
+    kahelo.setconfig('view', 'draw_tracks', 'True')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12b.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
     check('check view 1', compare_files(os.path.join('tests', 'easter12b.jpg'), 'test.jpg'))
 
-    setconfig('view', 'draw_tile_limits', 'True')
+    kahelo.setconfig('view', 'draw_tile_limits', 'True')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12c.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
     check('check view 1', compare_files(os.path.join('tests', 'easter12c.jpg'), 'test.jpg'))
 
-    setconfig('view', 'draw_tile_width', 'True')
+    kahelo.setconfig('view', 'draw_tile_width', 'True')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12d.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
     check('check view 1', compare_files(os.path.join('tests', 'easter12d.jpg'), 'test.jpg'))
 
-    setconfig('view', 'draw_circles', 'True')
+    kahelo.setconfig('view', 'draw_circles', 'True')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12e.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
