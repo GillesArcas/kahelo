@@ -10,8 +10,10 @@ import itertools
 import random
 
 if sys.version_info < (3,):
+    import ConfigParser as configparser
     import StringIO
 else:
+    import configparser
     import io
 
 try:
@@ -27,7 +29,6 @@ except:
 
 import six.moves.urllib.request as requests
 import six.moves.urllib.error as urllib_error
-import six.moves.configparser as configparser
 from six.moves.BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 from PIL import Image, ImageDraw
@@ -309,10 +310,9 @@ def default_radius(x, y, zoom):
     radius_km = tile_distance_km(x, y, x + radius_tu, y, zoom)
     return radius_km
 
-# -- Advanced settings from configuration files ------------------------------
+# -- Configuration file ------------------------------------------------------
 
 # The following docstring is used to create the configuration file.
-# It gives the default values for the advanced settings.
 DEFAULTS = \
 """
 [database]
@@ -329,6 +329,9 @@ session_max = 1000000
 draw_tile_limits = False                ; True or False
 draw_tile_width = False                 ; True or False
 
+[tracks]
+interpolate_points = True               ; use interpolated points for insertion
+
 [view]
 max_dim = 10000                         ; pixels
 antialias = False                       ; True (slower, better quality) or False
@@ -338,6 +341,7 @@ draw_tile_width = False                 ; True or False
 draw_tracks = True                      ; True or False
 draw_points = False                     ; True or False
 draw_circles = False                    ; True or False
+interpolated_points = False             ; show points and circles at interpolated coordinates
 
 [tiles]
 jpeg_quality = 85                       ; 1 (very poor) to 100 (lossless)
@@ -348,21 +352,9 @@ border_expired_color = 255 0 0 192      ; RGBA
 track_color = 255 0 0 2                 ; RGBW (width)
 
 [server]
-port = 80
+port = 8000
 """
 
-DEFAULTS_ADVANCED = \
-"""
-[tracks]
-interpolate_points = True
-
-[view]
-true_tiles = True
-interpolated_points = False
-
-[tiles]
-ghost_tile_color = 64 64 64
-"""
 
 class KaheloConfigParser (configparser.ConfigParser):
     """Add input checking."""
@@ -416,18 +408,15 @@ def createconfig(config_filename, defaults):
 
 def read_config(options):
     config_filename = configfilename()
-    advanced_config_filename = config_filename + '.advanced'
 
     try:
         if not os.path.exists(config_filename):
             createconfig(config_filename, DEFAULTS)
-        if not os.path.exists(advanced_config_filename):
-            createconfig(advanced_config_filename, DEFAULTS_ADVANCED)
     except:
         error('error creating configuration file')
 
     try:
-        getconfig(options, config_filename, advanced_config_filename)
+        getconfig(options, config_filename)
     except CustomException:
         raise
     except Exception as e:
@@ -446,7 +435,7 @@ def setconfig(section, key, value):
         config.write(configfile)
 
 
-def getconfig(options, config_filename, advanced_config_filename):
+def getconfig(options, config_filename):
     class SubOptions: pass
     options.database = SubOptions()
     options.insert   = SubOptions()
@@ -473,6 +462,9 @@ def getconfig(options, config_filename, advanced_config_filename):
     options.Import.draw_tile_limits = config.getboolean('import/export', 'draw_tile_limits')
     options.Import.draw_tile_width = config.getboolean('import/export', 'draw_tile_width')
 
+    # [tracks]
+    options.Tracks.interpolate_points = config.getboolean('tracks', 'interpolate_points')
+
     # [view]
     options.view.max_dim = config.getint('view', 'max_dim')
     options.view.antialias = config.getboolean('view', 'antialias')
@@ -482,6 +474,7 @@ def getconfig(options, config_filename, advanced_config_filename):
     options.view.draw_tracks = config.getboolean('view', 'draw_tracks')
     options.view.draw_points = config.getboolean('view', 'draw_points')
     options.view.draw_circles = config.getboolean('view', 'draw_circles')
+    options.view.interpolated_points = config.getboolean('view', 'interpolated_points')
 
     # [tiles]
     options.tiles.jpeg_quality = config.getint('tiles', 'jpeg_quality')
@@ -493,19 +486,6 @@ def getconfig(options, config_filename, advanced_config_filename):
 
     # [server]
     options.server.port = config.getint('server', 'port')
-
-    # advanced parameters
-    config.read(advanced_config_filename)
-
-    # [tracks]
-    options.Tracks.interpolate_points = config.getboolean('tracks', 'interpolate_points')
-
-    # [view]
-    options.view.true_tiles = config.getboolean('view', 'true_tiles')
-    options.view.interpolated_points = config.getboolean('view', 'interpolated_points')
-
-    # [tiles]
-    options.tiles.ghost_tile_color = config.getcolor('tiles', 'ghost_tile_color', 3)
 
     today = int(math.floor(time()))
     validity = options.database.tile_validity * (3600 * 24)
@@ -2083,10 +2063,7 @@ def makeview_tile(tiles, db, mosaic, draw, tile_width, x0, y0, x, y, zoom, optio
     X, Y = (x - x0) * tile_width, (y - y0) * tile_width
 
     if exists:
-        if options.view.true_tiles:
-            img = resize_image(options, tile, tile_width)
-        else:
-            img = Image.new('RGBA', (tile_width, tile_width), options.tiles.ghost_tile_color)
+        img = resize_image(options, tile, tile_width)
     else:
         if options.view.draw_upper_tiles:
             img = upper_tile_image(db, x, y, zoom)

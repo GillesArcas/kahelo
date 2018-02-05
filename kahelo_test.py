@@ -43,15 +43,12 @@ def main():
         creationflags = subprocess.CREATE_NEW_CONSOLE
 
     p = subprocess.Popen('python ./kahelo.py -server tests/easter.db', shell=shell, creationflags=creationflags)
-    url = 'http://127.0.0.1:80/{zoom}/{x}/{y}.jpg'
+    url = 'http://127.0.0.1:8000/{zoom}/{x}/{y}.jpg'
 
     # make sure tests are done with known configuration
     config_filename = kahelo.configfilename()
-    advanced_config_filename = config_filename + '.advanced'
     shutil.move(config_filename, config_filename + '.backup')
-    shutil.move(advanced_config_filename, advanced_config_filename + '.backup')
     kahelo.createconfig(config_filename, kahelo.DEFAULTS)
-    kahelo.createconfig(advanced_config_filename, kahelo.DEFAULTS_ADVANCED)
 
     try:
         define_tile_sets()
@@ -83,7 +80,6 @@ def main():
         os.remove('test2.gpx')
         os.remove('test.project')
         shutil.move(config_filename + '.backup', config_filename)
-        shutil.move(advanced_config_filename + '.backup', advanced_config_filename)
 
 
 GPX1 = """\
@@ -175,6 +171,18 @@ def compare_files(name1, name2):
                 r = False
                 print(i, c, x2[i])
         return r
+
+
+def compare_texts(name1, name2):
+    with open(name1) as f:
+        lines1 = f.read().splitlines()
+    with open(name2) as f:
+        lines2 = f.read().splitlines()
+    for index, (line1, line2) in enumerate(zip(lines1, lines2)):
+        if line1 != line2:
+            print('Lines #%d are different in file %s and file %s' % (index, name1, name2))
+            return False
+    return True
 
 
 def remove_db(db):
@@ -321,7 +329,7 @@ def test_stat():
             kahelo.kahelo('-stat ./tests/easter.db -quiet -track test2.gpx -zoom 10-12')
         finally:
             sys.stdout = temp
-    check('check stat', compare_files('tests/test_stat.txt', 'test.txt'))
+    check('check stat', compare_texts('tests/test_stat.txt', 'test.txt'))
     os.remove('test.txt')
 
 
