@@ -1,0 +1,18 @@
+-----------------------------
+Tiles in set              108
+Up to date                108
+Expired                     0
+Missing                     0
+Elapsed time         00:00:00
+-----------------------------
+Tiles in set              154
+Up to date                108
+Expired                     0
+Missing                    46
+Elapsed time         00:00:00
+-----------------------------
+Tiles in set              108
+Up to date                108
+Expired                     0
+Missing                     0
+Elapsed time         00:00:00

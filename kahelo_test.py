@@ -43,7 +43,7 @@ def main():
         creationflags = subprocess.CREATE_NEW_CONSOLE
 
     p = subprocess.Popen('python ./kahelo.py -server tests/easter.db', shell=shell, creationflags=creationflags)
-    url = 'http://127.0.0.1:8000/{zoom}/{x}/{y}.jpg'
+    url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
 
     # make sure tests are done with known configuration
     config_filename = kahelo.configfilename()
@@ -61,13 +61,12 @@ def main():
         test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-quiet')
         test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-verbose')
 
-        # TODO : test -inside
-
         test_stat()
         test_view()
         test_contours()
         test_tile_coords(db_name)
         test_zoom_subdivision(url)
+        test_inside()
 
         if test_result is True:
             print('All tests ok.')
@@ -377,5 +376,25 @@ def test_zoom_subdivision(url):
     remove_db('test.db')
 
 
+def test_inside():
+    """
+    -inside limits de tile set to the tiles defined by the tile set in the 
+    command line and already in the datebase.
+    """
+    temp = sys.stdout
+    with open('test.txt', 'wt') as sys.stdout:
+        try:
+            # define tile coordinates of the test database
+            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3210,9471,3221,9479')
+            # one tile more on each side
+            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3209,9470,3222,9480')
+            # limiting to content, should be the same as first count
+            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3209,9470,3222,9480 -inside')
+        finally:
+            sys.stdout = temp
+    check('check inside', compare_texts('tests/test_inside.txt', 'test.txt'))
+    os.remove('test.txt')
+
+    
 if __name__ == '__main__':
     main()

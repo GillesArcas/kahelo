@@ -12,9 +12,14 @@ import random
 if sys.version_info < (3,):
     import ConfigParser as configparser
     import StringIO
+    from urllib2 import urlopen as urlopen, HTTPError
+    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 else:
     import configparser
     import io
+    from urllib.request import urlopen as urlopen
+    from urllib.error import HTTPError
+    from http.server import HTTPServer, BaseHTTPRequestHandler
 
 try:
     import sqlite3
@@ -26,10 +31,6 @@ try:
     import xml.etree.cElementTree as ET
 except:
     import xml.etree.ElementTree as ET
-
-import six.moves.urllib.request as requests
-import six.moves.urllib.error as urllib_error
-from six.moves.BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 from PIL import Image, ImageDraw
 from time import time, sleep, strftime, gmtime
@@ -310,7 +311,9 @@ def default_radius(x, y, zoom):
     radius_km = tile_distance_km(x, y, x + radius_tu, y, zoom)
     return radius_km
 
+    
 # -- Configuration file ------------------------------------------------------
+
 
 # The following docstring is used to create the configuration file.
 DEFAULTS = \
@@ -423,18 +426,6 @@ def read_config(options):
         error('error reading configuration file :' + str(e))
 
 
-def resetconfig():
-    createconfig(configfilename(), DEFAULTS)
-
-
-def setconfig(section, key, value):
-    config = KaheloConfigParser()
-    config.read(configfilename())
-    config.set(section, key, value)
-    with open(configfilename(), 'wt') as configfile:
-        config.write(configfile)
-
-
 def getconfig(options, config_filename):
     class SubOptions: pass
     options.database = SubOptions()
@@ -490,6 +481,18 @@ def getconfig(options, config_filename):
     today = int(math.floor(time()))
     validity = options.database.tile_validity * (3600 * 24)
     options.database.expiry_date = today - validity
+
+
+def resetconfig():
+    createconfig(configfilename(), DEFAULTS)
+
+
+def setconfig(section, key, value):
+    config = KaheloConfigParser()
+    config.read(configfilename())
+    config.set(section, key, value)
+    with open(configfilename(), 'wt') as configfile:
+        config.write(configfile)
 
 
 # -- Error handling ----------------------------------------------------------
@@ -1770,11 +1773,11 @@ def insert_tile(tiles, db, options, x, y, zoom, index, n, counters):
             url = tile_url(options, db, x, y, zoom)
             try:
                 # no proxy handling...
-                u = requests.urlopen(url, timeout=options.insert.timeout)
+                u = urlopen(url, timeout=options.insert.timeout)
                 tile_buffer = u.read()
                 u.close()
                 break
-            except urllib_error.HTTPError as e:
+            except HTTPError as e:
                 if e.code == 404:
                     counters.missing += 1
                     tile_trace(options, x, y, zoom, index, n, '%s : not found' % url)
@@ -2108,6 +2111,7 @@ def do_server(db_name, options):
     while keep_running:
         server.handle_request()
 
+
 class TileServerHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         global keep_running
@@ -2141,8 +2145,15 @@ class TileServerHTTPRequestHandler(BaseHTTPRequestHandler):
         except IOError:
             self.send_error(404, 'file not found')
 
+
+def server_url():
+    config = KaheloConfigParser()
+    config.read(configfilename())
+    return 'http://127.0.0.1:' + config.get('server', 'port')
+
+
 def stop_server():
-    requests.urlopen('http://127.0.0.1:80/SHUTDOWN')
+    urlopen(server_url() + '/SHUTDOWN')
 
 
 # -stat : database statistics ------------------------------------------------
@@ -2208,7 +2219,9 @@ def do_statistics(db_name, options):
         lat_max, lon_max = tile2deg(xmax[zoom], ymax[zoom], zoom)
         print('%4d %11.6f %11.6f %11.6f %11.6f' % (zoom, lat_min, lon_min, lat_max, lon_max))
 
+
 # -- Image and drawing helpers -----------------------------------------------
+
 
 def create_image_from_blob(blob):
     # blob is a string containing an entire image file
@@ -2216,6 +2229,7 @@ def create_image_from_blob(blob):
         return Image.open(StringIO.StringIO(blob))
     else:
         return Image.open(io.BytesIO(blob))
+
 
 def create_blob_from_image(img, format, jpeg_quality=85):
     # img is a PIL image
@@ -2230,6 +2244,7 @@ def create_blob_from_image(img, format, jpeg_quality=85):
         save_image(img, bytesIO, format, jpeg_quality)
         return bytesIO.getvalue()
 
+
 def save_image(img, target, format, jpeg_quality=85):
     # img is a PIL image
     # target is filename or StringIO/BytesIO
@@ -2240,21 +2255,26 @@ def save_image(img, target, format, jpeg_quality=85):
     else:
         error('image format %s is not handled' % format)
 
+
 def save_image_to_jpg(img, target, jpeg_quality=85):
     img.convert('RGB').save(target, 'JPEG', optimize=True, quality=jpeg_quality)
 
+
 def save_image_to_png(img, target):
     img.save(target, 'PNG', optimize=True)
+
 
 def save_image_to_png8(img, target):
     # convert('RGB').convert('P') seems necessary
     img = img.convert('RGB').convert('P', palette=Image.ADAPTIVE, colors=256)
     img.save(target, 'PNG', colors=256)
 
+
 def save_image_to_png4(img, target):
     # convert('RGB').convert('P') seems necessary
     img = img.convert('RGB').convert('P', palette=Image.ADAPTIVE, colors=16)
     img.save(target, 'PNG', colors=16)
+
 
 def draw_alpha_border(tile, color):
     # V1
@@ -2278,6 +2298,7 @@ def draw_alpha_border(tile, color):
 
     return draw_alpha_border2(tile, color)
 
+
 def draw_alpha_text(tile, text, color):
     # draw square with text color
     border = Image.new('RGB', tile.size, color)
@@ -2289,6 +2310,7 @@ def draw_alpha_text(tile, text, color):
 
     return Image.composite(tile, border, mask)
 
+
 def draw_tile_width(x, y, zoom, tile, color):
     w = tile_distance_km(x, y, x + 1, y, zoom)
     if w < 10:
@@ -2299,6 +2321,7 @@ def draw_tile_width(x, y, zoom, tile, color):
         dec = 0
     return draw_alpha_text(tile, '%.*f' % (dec, w), color)
 
+
 def resize_image(options, img, width):
     if options.view.antialias is False:
         img = img.resize((width, width), Image.NEAREST)
@@ -2306,6 +2329,7 @@ def resize_image(options, img, width):
         img = img.convert('RGB')
         img = img.resize((width, width), Image.ANTIALIAS)
     return img
+
 
 def upper_tile_image(db, x, y, zoom):
     tile = db.upper_tile(x, y, zoom)
@@ -2329,6 +2353,7 @@ def upper_tile_image(db, x, y, zoom):
 
         # done
         return newimg
+
 
 def draw_tracks(options, draw, source, x0, y0, zoom, tile_width):
     segments = track_segments(source, zoom, options)
@@ -2359,7 +2384,9 @@ def draw_tracks(options, draw, source, x0, y0, zoom, tile_width):
         seg = ((int((x - x0) * tile_width), int((y - y0) * tile_width)) for x, y in segment)
         draw.line(sum(seg, ()), fill=fill, width=width)
 
+
 # -- Main --------------------------------------------------------------------
+
 
 def kahelo(argstring=None):
     try:
@@ -2376,7 +2403,6 @@ def kahelo(argstring=None):
     finally:
         pass
 
+
 if __name__ == "__main__":
     kahelo()
-
-# --
