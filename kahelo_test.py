@@ -76,8 +76,7 @@ def main(verbose = False):
             print('Failure...')
 
     finally:
-        # kahelo.stop_server()
-        server.stop_server()
+        kahelo.stop_server()
         os.remove('test.gpx')
         os.remove('test2.gpx')
         os.remove('test.project')

@@ -2103,8 +2103,8 @@ def do_server(db_name, options):
     global db
     db = db_factory(db_name)
 
-class HTTPServerBest(HTTPServer):
-
+    server_address = ('127.0.0.1', options.server.port)
+    
     server = HTTPServer(server_address, TileServerHTTPRequestHandler)
     print('tile server is running, ctrl-c to terminate...')
     keep_running = True
