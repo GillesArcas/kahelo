@@ -783,6 +783,19 @@ http://otile[1234].mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.jpg</pre>
     </div>
 
     <hr size="1" color="#C0C0C0" />
+    <h4><code>[tracks]</code></h4>
+    <div>
+        <div class="col1">
+            <code>interpolate_points</code>
+        </div>
+        <div class="col2">
+            Create track points at integer coordinates on both axes. This enables
+            to avoid missing tiles between distant track points when inserting
+            tiles along a track.
+        </div>
+    </div>
+
+    <hr size="1" color="#C0C0C0" />
     <h4><code>[view]</code></h4>
     <div>
         <div class="col1">
@@ -842,6 +855,12 @@ http://otile[1234].mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.jpg</pre>
         <div class="col2">
             Draw a circle centered at each point of the gpx track with radius
             given by the <code>-radius</code> parameter (or default value).
+        </div>
+        <div class="col1">
+            <code>interpolated_points</code>
+        </div>
+        <div class="col2">
+            Draw points and circles on interpolated points, see <code>tracks/interpolate_points</code>.
         </div>
     </div>
 

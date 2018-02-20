@@ -20,15 +20,35 @@ def main():
 
     db_name = 'tests/easter.db'
 
-    p = subprocess.Popen('python kahelo.py -server tests/easter.db', shell=True)
-    url = 'http://127.0.0.1:80/{zoom}/{x}/{y}.jpg'
+    if os.name == 'nt':
+        mode = 4
+    else:
+        mode = 3
+
+    if mode == 1:
+        # no window for subprocess, traces from server mixed with traces from client
+        shell = False
+        creationflags = 0
+    elif mode == 2:
+        # window for subprocess (windows only)
+        shell = False
+        creationflags = subprocess.CREATE_NEW_CONSOLE
+    elif mode == 3:
+        # no window for subprocess, traces from server mixed with traces from client
+        shell = True
+        creationflags = 0
+    elif mode == 4:
+        # no window for subprocess, no mixed traces (windows only)
+        shell = True
+        creationflags = subprocess.CREATE_NEW_CONSOLE
+
+    p = subprocess.Popen('python ./kahelo.py -server tests/easter.db', shell=shell, creationflags=creationflags)
+    url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
 
     # make sure tests are done with known configuration
-    shutil.move('kahelo.config', 'kahelo.config.backup')
-    shutil.move('kahelo.config.advanced', 'kahelo.config.advanced.backup')
-
-    kahelo.createconfig('kahelo.config', kahelo.DEFAULTS)
-    kahelo.createconfig('kahelo.config.advanced', kahelo.DEFAULTS_ADVANCED)
+    config_filename = kahelo.configfilename()
+    shutil.move(config_filename, config_filename + '.backup')
+    kahelo.createconfig(config_filename, kahelo.DEFAULTS)
 
     try:
         define_tile_sets()
@@ -41,14 +61,14 @@ def main():
         test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-quiet')
         test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-verbose')
 
-        # TODO : test -inside
-
+        test_stat()
         test_view()
         test_contours()
         test_tile_coords(db_name)
         test_zoom_subdivision(url)
+        test_inside()
 
-        if test_result == True:
+        if test_result is True:
             print('All tests ok.')
         else:
             print('Failure...')
@@ -58,10 +78,7 @@ def main():
         os.remove('test.gpx')
         os.remove('test2.gpx')
         os.remove('test.project')
-        os.remove('kahelo.config')
-        os.remove('kahelo.config.advanced')
-        os.rename('kahelo.config.backup', 'kahelo.config')
-        os.rename('kahelo.config.advanced.backup', 'kahelo.config.advanced')
+        shutil.move(config_filename + '.backup', config_filename)
 
 
 GPX1 = """\
@@ -129,10 +146,12 @@ test_result = True
 def check(msg, boolean):
     global test_number, test_result
     test_number += 1
-    if boolean == False:
+    if boolean is False:
         print('Error on test #%d: %s' % (test_number, msg))
         test_result = False
         sys.exit(1)
+    else:
+        print('Test #%d: %s OK' % (test_number, msg))
 
 
 def compare_files(name1, name2):
@@ -151,6 +170,18 @@ def compare_files(name1, name2):
                 r = False
                 print(i, c, x2[i])
         return r
+
+
+def compare_texts(name1, name2):
+    with open(name1) as f:
+        lines1 = f.read().splitlines()
+    with open(name2) as f:
+        lines2 = f.read().splitlines()
+    for index, (line1, line2) in enumerate(zip(lines1, lines2)):
+        if line1 != line2:
+            print('Lines #%d are different in file %s and file %s' % (index, name1, name2))
+            return False
+    return True
 
 
 def remove_db(db):
@@ -172,18 +203,6 @@ def clean():
     for x in ('test1.png', 'test2.png'):
         if os.path.isfile(x):
             os.remove(x)
-
-
-def resetconfig():
-    kahelo.createconfig('./kahelo/kahelo.config', kahelo.DEFAULTS)
-
-
-def setconfig(section, key, value):
-    config = kahelo.KaheloConfigParser()
-    config.read('./kahelo/kahelo.config')
-    config.set(section, key, value)
-    with open('./kahelo/kahelo.config', 'wt') as configfile:
-        config.write(configfile)
 
 
 # Tests
@@ -261,34 +280,35 @@ def test_db(url, db_format, tile_format, db_dest_format, tile_dest_format, trace
 
 
 def test_view():
-    resetconfig()
-    setconfig('view', 'draw_tracks', 'False')
-    setconfig('view', 'draw_tile_limits', 'False')
-    setconfig('view', 'draw_tile_width', 'False')
+    kahelo.resetconfig()
+    kahelo.setconfig('view', 'draw_tracks', 'False')
+    kahelo.setconfig('view', 'draw_tile_limits', 'False')
+    kahelo.setconfig('view', 'draw_tile_width', 'False')
+    kahelo.setconfig('view', 'draw_circles', 'False')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12a.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
     check('check view 1', compare_files(os.path.join('tests', 'easter12a.jpg'), 'test.jpg'))
 
-    setconfig('view', 'draw_tracks', 'True')
+    kahelo.setconfig('view', 'draw_tracks', 'True')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12b.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
     check('check view 1', compare_files(os.path.join('tests', 'easter12b.jpg'), 'test.jpg'))
 
-    setconfig('view', 'draw_tile_limits', 'True')
+    kahelo.setconfig('view', 'draw_tile_limits', 'True')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12c.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
     check('check view 1', compare_files(os.path.join('tests', 'easter12c.jpg'), 'test.jpg'))
 
-    setconfig('view', 'draw_tile_width', 'True')
+    kahelo.setconfig('view', 'draw_tile_width', 'True')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12d.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
     check('check view 1', compare_files(os.path.join('tests', 'easter12d.jpg'), 'test.jpg'))
 
-    setconfig('view', 'draw_circles', 'True')
+    kahelo.setconfig('view', 'draw_circles', 'True')
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
     check('check view 1', compare_files(os.path.join('tests', 'easter12e.png'), 'test.png'))
     kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
@@ -296,6 +316,20 @@ def test_view():
 
     os.remove('test.png')
     os.remove('test.jpg')
+
+
+def test_stat():
+    temp = sys.stdout
+    with open('test.txt', 'wt') as sys.stdout:
+        try:
+            kahelo.kahelo('-stat ./tests/easter.db -quiet -records')
+            kahelo.kahelo('-stat ./tests/easter.db -quiet -project test.project')
+            kahelo.kahelo('-stat ./tests/easter.db -quiet -track test.gpx -zoom 10-11')
+            kahelo.kahelo('-stat ./tests/easter.db -quiet -track test2.gpx -zoom 10-12')
+        finally:
+            sys.stdout = temp
+    check('check stat', compare_texts('tests/test_stat.txt', 'test.txt'))
+    os.remove('test.txt')
 
 
 def test_contours():
@@ -342,5 +376,25 @@ def test_zoom_subdivision(url):
     remove_db('test.db')
 
 
+def test_inside():
+    """
+    -inside limits de tile set to the tiles defined by the tile set in the 
+    command line and already in the datebase.
+    """
+    temp = sys.stdout
+    with open('test.txt', 'wt') as sys.stdout:
+        try:
+            # define tile coordinates of the test database
+            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3210,9471,3221,9479')
+            # one tile more on each side
+            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3209,9470,3222,9480')
+            # limiting to content, should be the same as first count
+            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3209,9470,3222,9480 -inside')
+        finally:
+            sys.stdout = temp
+    check('check inside', compare_texts('tests/test_inside.txt', 'test.txt'))
+    os.remove('test.txt')
+
+    
 if __name__ == '__main__':
     main()
