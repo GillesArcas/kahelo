@@ -1,6 +1,6 @@
 # Kahelo
 
-[![Build Status](https://travis-ci.org/dellielo/kahelo.svg?branch=testing)](https://travis-ci.org/dellielo/kahelo)
+[![Build Status](https://travis-ci.org/dellielo/kahelo.svg?branch=master)](https://travis-ci.org/dellielo/kahelo)
 
 
 
