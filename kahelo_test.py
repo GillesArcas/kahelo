@@ -9,16 +9,18 @@ import os
 import sys
 import shutil
 import subprocess
+import time 
 
-import kahelo
+from kahelo import kahelo
 
 
-def main():
+def main(verbose = False):
     if len(sys.argv) != 1:
         print(__doc__)
         exit(1)
 
     db_name = 'tests/easter.db'
+    trace='-verbose' if verbose else '-quiet'
 
     if os.name == 'nt':
         mode = 4
@@ -42,7 +44,9 @@ def main():
         shell = True
         creationflags = subprocess.CREATE_NEW_CONSOLE
 
-    p = subprocess.Popen('python ./kahelo.py -server tests/easter.db', shell=shell, creationflags=creationflags)
+    kahelo.kahelo("-version")
+    p = subprocess.Popen('kahelo -server tests/easter.db', shell=shell, creationflags=creationflags)
+    # time.sleep(5)
     url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
 
     # make sure tests are done with known configuration
@@ -55,13 +59,13 @@ def main():
 
         for db1 in ('kahelo', 'rmaps', 'folder', 'maverick'):
             for db2 in ('kahelo', 'rmaps', 'folder', 'maverick'):
-                print('---', db1, db2)
-                test_db(url, db1, 'server', db2, 'png', trace='-verbose') # jpg
-        
-        test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-quiet')
-        test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-verbose')
+                print('--- TESTS with ---', db1, db2)
+                test_db(url, db1, 'server', db2, 'png', trace=trace) # jpg
 
         test_stat()
+        # # TODO : test -inside
+
+        # test_stat()
         test_view()
         test_contours()
         test_tile_coords(db_name)

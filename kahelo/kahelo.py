@@ -1238,7 +1238,7 @@ class TileDatabase:
 class SqliteDatabase(TileDatabase):
     def __init__(self, db_name, tile_format, url_template):
         TileDatabase.__init__(self, db_name, tile_format, url_template)
-        self.conn = sqlite3.connect(db_name)
+        self.conn = sqlite3.connect(db_name, check_same_thread=False)
         if sys.version_info < (3,):
             self.conn.text_factory = str
         else:
@@ -2104,7 +2104,7 @@ def do_server(db_name, options):
     db = db_factory(db_name)
 
     server_address = ('127.0.0.1', options.server.port)
-
+    
     server = HTTPServer(server_address, TileServerHTTPRequestHandler)
     print('tile server is running, ctrl-c to terminate...')
     keep_running = True
@@ -2114,7 +2114,6 @@ def do_server(db_name, options):
 
 class TileServerHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        global keep_running
         global db
         try:
             if 'SHUTDOWN' in self.path:
