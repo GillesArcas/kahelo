@@ -45,6 +45,7 @@ def main(verbose = False):
         creationflags = subprocess.CREATE_NEW_CONSOLE
 
     p = subprocess.Popen('kahelo -server tests/easter.db', shell=shell, creationflags=creationflags)
+    time.sleep(5)
     url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
 
     # make sure tests are done with known configuration
