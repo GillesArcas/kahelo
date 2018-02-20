@@ -9,16 +9,18 @@ import os
 import sys
 import shutil
 import subprocess
+import time 
 
 from kahelo import kahelo
 
 
-def main():
+def main(verbose = False):
     if len(sys.argv) != 1:
         print(__doc__)
         exit(1)
 
     db_name = 'tests/easter.db'
+    trace='-verbose' if verbose else '-quiet'
 
     if os.name == 'nt':
         mode = 4
@@ -55,13 +57,13 @@ def main():
 
         for db1 in ('kahelo', 'rmaps', 'folder', 'maverick'):
             for db2 in ('kahelo', 'rmaps', 'folder', 'maverick'):
-                print('---', db1, db2)
-                test_db(url, db1, 'server', db2, 'png', trace='-verbose') # jpg
-        
-        test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-quiet')
-        test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-verbose')
+                print('--- TESTS with ---', db1, db2)
+                test_db(url, db1, 'server', db2, 'png', trace=trace) # jpg
 
         test_stat()
+        # # TODO : test -inside
+
+        # test_stat()
         test_view()
         test_contours()
         test_tile_coords(db_name)
@@ -74,7 +76,8 @@ def main():
             print('Failure...')
 
     finally:
-        kahelo.stop_server()
+        # kahelo.stop_server()
+        server.stop_server()
         os.remove('test.gpx')
         os.remove('test2.gpx')
         os.remove('test.project')
