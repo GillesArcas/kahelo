@@ -311,7 +311,7 @@ def default_radius(x, y, zoom):
     radius_km = tile_distance_km(x, y, x + radius_tu, y, zoom)
     return radius_km
 
-    
+
 # -- Configuration file ------------------------------------------------------
 
 
@@ -1173,6 +1173,9 @@ class TileDatabase:
             conv = {'.jpg':'JPG', '.png':'PNG'}
             try:
                 ext = os.path.splitext(self.url_template())[1]
+                if '?' in ext:
+                    # remove url parameters (api key for instance)
+                    ext = ext.split('?', 1)[0]
                 return conv[ext.lower()]
             except:
                 error('unable to determine tile format from url template')
