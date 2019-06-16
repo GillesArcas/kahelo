@@ -1749,11 +1749,14 @@ def do_insert(db_name, options):
 
     counters = TileCounters()
 
-    for index, (x, y, zoom) in enumerate(tiles):
-        insert_tile(tiles, db, options, x, y, zoom, index, n, counters)
-    db.commit()
-    if options.verbose:
-        print('Commit.')
+    try:
+        for index, (x, y, zoom) in enumerate(tiles):
+            insert_tile(tiles, db, options, x, y, zoom, index, n, counters)
+    finally:
+        # final commit even if interrupted by user
+        db.commit()
+        if options.verbose:
+            print('Commit.')
 
     display_report(options, ('Tiles in set', n),
                             ('Already present', counters.ignored),
