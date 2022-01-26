@@ -1757,11 +1757,10 @@ def do_insert(db_name, options):
         db.commit()
         if options.verbose:
             print('Commit.')
-
-    display_report(options, ('Tiles in set', n),
-                            ('Already present', counters.ignored),
-                            ('Inserted', counters.inserted),
-                            ('Missing', counters.missing))
+        display_report(options, ('Tiles in set', n),
+                                ('Already present', counters.ignored),
+                                ('Inserted', counters.inserted),
+                                ('Missing', counters.missing))
 
 def insert_tile(tiles, db, options, x, y, zoom, index, n, counters):
     exists_dst, date_dst = db.exists(x, y, zoom)
@@ -2136,7 +2135,6 @@ class TileServerHTTPRequestHandler(BaseHTTPRequestHandler):
             zoom, x, y = m.group(1,2,3)
             zoom, x, y = int(zoom), int(x), int(y)
             exists, date, img = db.retrieve(x, y, zoom)
-            #print(x, y, zoom, exists)
 
             if not exists:
                 raise IOError
