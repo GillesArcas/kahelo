@@ -67,10 +67,13 @@ THE SOFTWARE.
 
 # -- Constants ---------------------------------------------------------------
 
+
 APPNAME = 'kahelo'
 MAXZOOM = 18
 
+
 # -- Command line parsing ----------------------------------------------------
+
 
 USAGE = """
   -describe <db name> [-db_format <db format] [-tile_format <tile format>] [-url_template <url template>]
@@ -103,6 +106,7 @@ url template examples:
 full help:
   APPNAME.html\
 """
+
 
 class ArgumentParser(argparse.ArgumentParser):
     def __init__(self):
@@ -199,6 +203,7 @@ class ArgumentParser(argparse.ArgumentParser):
         complete_source(options)
         return options
 
+
 def complete_source(options):
     # set tile generator and tile origin
     if options.track:
@@ -255,6 +260,7 @@ def complete_source(options):
     # used to find gpx files in path of project
     options.project_filename = None
 
+
 class ProjectParser(argparse.ArgumentParser):
     def __init__(self):
         argparse.ArgumentParser.__init__(self)
@@ -278,6 +284,7 @@ class ProjectParser(argparse.ArgumentParser):
         complete_source(options)
         return options
 
+
 def decode_range(s):
     """Decode a range string into a list of integers: 8-10,12,14 --> [8, 9, 10, 12, 14]"""
     R = []
@@ -293,6 +300,7 @@ def decode_range(s):
             return None
     return R
 
+
 def decode_range_ex(s):
     """Decode a zoom argument: 8-10,12,14/12 --> [8, 9, 10, 12, 14], 12"""
     if ('/') not in s:
@@ -303,8 +311,10 @@ def decode_range_ex(s):
         dec_limit = int(zoom_limit) if zoom_limit.isdigit() else None
         return dec_range, dec_limit
 
+
 def options_generate(options):
     return options.tile_generator, options.tile_source, options.zoom, options.radius
+
 
 def default_radius(x, y, zoom):
     radius_tu = 0.5
@@ -497,15 +507,19 @@ def setconfig(section, key, value):
 
 # -- Error handling ----------------------------------------------------------
 
+
 class CustomException(Exception):
     pass
+
 
 def error(msg):
     print(APPNAME, 'error:', msg)
     print('-help or -h for more information')
     raise CustomException()
 
+
 # -- Command dispatcher ------------------------------------------------------
+
 
 def apply_command(options):
     if options.do_version:
@@ -537,9 +551,12 @@ def apply_command(options):
     else:
         error('no command given')
 
+
 # -- Conversions between tile units and latitude/longitude -------------------
 
+
 EARTH_RADIUS = 6371
+
 
 def deg2tilecoord(lat_deg, lon_deg, zoom):
     """
@@ -555,6 +572,7 @@ def deg2tilecoord(lat_deg, lon_deg, zoom):
     except:
         error('error converting (%.4f, %.4f, %d) to tile' % (lat_deg, lon_deg, zoom))
 
+
 def deg2tile(lat_deg, lon_deg, zoom):
     """
     Convert latitude,longitude coordinates in degrees into tile units (rounded)
@@ -563,6 +581,7 @@ def deg2tile(lat_deg, lon_deg, zoom):
     xtile, ytile = deg2tilecoord(lat_deg, lon_deg, zoom)
     return int(xtile), int(ytile)
 
+
 def tile2deg(xtile, ytile, zoom):
     n = 2.0 ** zoom
     lon_deg = xtile / n * 360.0 - 180.0
@@ -570,13 +589,16 @@ def tile2deg(xtile, ytile, zoom):
     lat_deg = math.degrees(lat_rad)
     return lat_deg, lon_deg
 
+
 def sqr(x):
     return x * x
+
 
 def asinx(x):
     # has to bound the parameter due rounding errors n parameter calculus
     x = -1 if x < -1 else 1 if x > 1 else x
     return math.asin(x)
+
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     # coordinates in degrees, result in kilometer
@@ -591,11 +613,13 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
     return d
 
+
 def shift_longitude(lat, lon, d):
     # coordinates and result in degrees, d in kilometer
     lat = math.radians(lat)
     lon = math.radians(lon)
     return math.degrees(lat), math.degrees(lon - 2 * asinx(math.sin(d / 2.0 / EARTH_RADIUS) / math.cos(lat)))
+
 
 def shift_latitude(lat, lon, d):
     # coordinates and result in degrees, d in kilometer
@@ -603,17 +627,20 @@ def shift_latitude(lat, lon, d):
     lon = math.radians(lon)
     return math.degrees(lat - d / EARTH_RADIUS), math.degrees(lon)
 
+
 def tile_shift_longitude(x, y, zoom, d):
     # x, y and result in tile units, d in kilometer
     lat, lon = tile2deg(x, y, zoom)
     lat2, lon2 = shift_longitude(lat, lon, d)
     return deg2tilecoord(lat2, lon2, zoom)
 
+
 def tile_shift_latitude(x, y, zoom, d):
     # x, y and result in tile units, d in kilometer
     lat, lon = tile2deg(x, y, zoom)
     lat2, lon2 = shift_latitude(lat, lon, d)
     return deg2tilecoord(lat2, lon2, zoom)
+
 
 def tile_distance_km(x1, y1, x2, y2, zoom):
     # x1, y1, x2, y2 in tile units, result in kilometer
@@ -622,13 +649,16 @@ def tile_distance_km(x1, y1, x2, y2, zoom):
     d = haversine_distance(lat1, lon1, lat2, lon2)
     return d
 
+
 def tile_hdistance_tu(x, y, zoom, d):
     # x, y in tile units, d in kilometer, result in tile units
     x2, y2 = tile_shift_longitude(x, y, zoom, d)
     d = abs(x - x2)
     return d
 
+
 # -- Tile utilities ----------------------------------------------------------
+
 
 def binding_box(tiles):
     xmin = 1000000000
@@ -646,6 +676,7 @@ def binding_box(tiles):
         if y > ymax:
             ymax = y
     return xmin, ymin, xmax, ymax
+
 
 def interior(tiles):
     xmin, ymin, xmax, ymax = binding_box(tiles)
@@ -679,6 +710,7 @@ def interior(tiles):
                 res.append((x, y))
 
     return res
+
 
 def interpolate_points(tile_points):
     # tile_points is a list of point in tile units
@@ -714,6 +746,7 @@ def interpolate_points(tile_points):
 
     return list(tiles)
 
+
 def circle_tiles(x, y, zoom, radius_km, tiles):
     # x, y tile coordinates, radius in km
     radius_tu = tile_hdistance_tu(x, y, zoom, radius_km)
@@ -731,6 +764,7 @@ def circle_tiles(x, y, zoom, radius_km, tiles):
         for yt in range(int(y0), int(y1) + 1):
             tiles.add((xt, yt))
             tiles.add((xt - 1, yt))
+
 
 def expand_tiles(segments, options, zoom, radius_km):
     tiles = set()
@@ -756,15 +790,19 @@ def expand_tiles(segments, options, zoom, radius_km):
 
     return list([(x, y) for x, y in tiles if tilemin <= x <= tilemax and tilemin <= y <= tilemax])
 
+
 # -- Parsing gpx files -------------------------------------------------------
+
 
 # cache for gpx trees as parsing is expensive
 GpxCache = dict()
+
 
 def namespace(root):
     # http://www.topografix.com/GPX/1/0
     # http://www.topografix.com/GPX/1/1
     return root.tag[1:-4]
+
 
 def read_gpx(gpx_filename):
     # read a gpx file as a list of tracks
@@ -810,6 +848,7 @@ def read_gpx(gpx_filename):
 
     return trklist
 
+
 def find_file(filename, options):
     """Search the file either locally or in the directory of the project file."""
 
@@ -822,12 +861,14 @@ def find_file(filename, options):
     else:
         return os.path.join(os.path.dirname(options.project_filename), filename)
 
+
 def track_segments(filename, zoom, options):
     filename = find_file(filename, options)
     if options.project:
         return track_segments_project(filename, zoom, options)
     else:
         return track_segments_gpx(filename, zoom, options)
+
 
 def track_segments_gpx(gpx_filename, zoom, options):
     """Return the list of all segments in gpx file in tile units."""
@@ -838,6 +879,7 @@ def track_segments_gpx(gpx_filename, zoom, options):
         for segment in track:
             segments.append([deg2tilecoord(lat, lon, zoom) for lat,lon in segment])
     return segments
+
 
 def track_segments_project(project_filename, zoom, options):
     """Return the list of all segments in gpx files in project in tile units."""
@@ -855,12 +897,14 @@ def track_segments_project(project_filename, zoom, options):
 
     return segments
 
+
 def track_points(filename, zoom, options):
     filename = find_file(filename, options)
     if options.project:
         return track_points_project(filename, zoom, options)
     else:
         return track_points_gpx(filename, zoom, options)
+
 
 def track_points_gpx(gpx_filename, zoom, options):
     """Return the list of all points in gpx file in tile units."""
@@ -872,6 +916,7 @@ def track_points_gpx(gpx_filename, zoom, options):
         else:
             points_tu.extend(segment)
     return points_tu
+
 
 def track_points_project(project_filename, zoom, options):
     """Return the list of all points in gpx files in project in tile units."""
@@ -889,11 +934,14 @@ def track_points_project(project_filename, zoom, options):
 
     return points_tu
 
+
 # -- Generation of tile sets -------------------------------------------------
+
 
 # tile set generator
 # - iterator (possibly yield generator)
 # - precalculated full size (taking into account tile subdivision)
+
 
 class TileSet:
     def __init__(self, gen=None, size=0):
@@ -920,10 +968,12 @@ class TileSet:
         self.gen = iter(tiles)
         return binding_box(tiles)
 
+
 # subdivision generator
 # created with a list of (x, y)
 # when iterating, a tile at level current_zoom is subdivised at level
 # target_zoom
+
 
 def subdivise(tiles, zoom_current, zoom_target):
     ratio = 2 ** (zoom_target - zoom_current)
@@ -932,7 +982,9 @@ def subdivise(tiles, zoom_current, zoom_target):
             for Y in range(ratio):
                 yield x * ratio + X, y * ratio + Y, zoom_target
 
+
 # filtering with database and zoom
+
 
 def filter_tileset_with_db(tileset, db, zoom):
     """
@@ -947,13 +999,16 @@ def filter_tileset_with_db(tileset, db, zoom):
     tileset = list(set(db_tiles).intersection(tileset))
     return tileset, len(tileset)
 
+
 def filter_tileset_with_zoom(tileset, zoom):
     # maybe useful
     tileset = [tile for tile in tileset if tile[2] == zoom]
     return tileset, len(tileset)
 
+
 # track and contour tile generators
 # the next four functions return a list of (x, y)
+
 
 def tile_track_generator(options, gpx_filename, zoom, radius):
     # returns list of tiles for track
@@ -969,6 +1024,7 @@ def tile_track_generator(options, gpx_filename, zoom, radius):
     tiles = expand_tiles(segments, options, zoom, radius)
     return tiles
 
+
 def tile_tracks_generator(options, gpx_filename, zoom, radius):
     # return list of tiles for tracks
     # each segment is considered as a separate track
@@ -976,6 +1032,7 @@ def tile_tracks_generator(options, gpx_filename, zoom, radius):
     segments = track_segments(gpx_filename, zoom, options)
     tiles = expand_tiles(segments, options, zoom, radius)
     return tiles
+
 
 def tile_contour_generator(options, gpx_filename, zoom, radius):
     # return list of tiles for contour
@@ -992,6 +1049,7 @@ def tile_contour_generator(options, gpx_filename, zoom, radius):
     tiles = expand_tiles(segments, options, zoom, radius)
     return interior(tiles)
 
+
 def tile_contours_generator(options, gpx_filename, zoom, radius):
     # return list of tiles for contours
     # each segment is considered as a separate contour
@@ -1007,7 +1065,9 @@ def tile_contours_generator(options, gpx_filename, zoom, radius):
 
     return list(all_tiles)
 
+
 # tile set generator for -track, -contour, -contours
+
 
 def tile_list_generator(options, db_source, db_filter):
     """ Generate tiles from track(s) or contour(s).
@@ -1016,7 +1076,6 @@ def tile_list_generator(options, db_source, db_filter):
     Handle intersection with database tiles if enabled.
     Return dedicated iterator with total and reduced lengths.
     """
-
     generator, source, zooms, radius = options_generate(options)
 
     tile_set = TileSet()
@@ -1024,6 +1083,7 @@ def tile_list_generator(options, db_source, db_filter):
         tile_set.extend(tile_list_generate_level(options, generator, source, zoom, radius, db_source, db_filter))
 
     return tile_set
+
 
 def tile_list_generate_level(options, generator, source, zoom, radius, db_source, db_filter):
     print(source, zoom)
@@ -1047,7 +1107,9 @@ def tile_list_generate_level(options, generator, source, zoom, radius, db_source
 
     return TileSet(tileset, size)
 
+
 # tile set generator for -project
+
 
 def tile_project_generator(options, project, zoom, radius, db_source, db_filter):
     if zoom is None:
@@ -1072,6 +1134,7 @@ def tile_project_generator(options, project, zoom, radius, db_source, db_filter)
 
     return tile_set
 
+
 def project_options(options):
     result = []
     for line in read_project(options.project, options):
@@ -1081,6 +1144,7 @@ def project_options(options):
         read_config(options_)
         result.append(options_)
     return result
+
 
 def read_project(project_filename, options):
     try:
@@ -1096,7 +1160,9 @@ def read_project(project_filename, options):
     except:
         error('error reading project ' + project_filename)
 
+
 # tile set generator for -records
+
 
 def db_tiles_generator(options, source, zooms, radius, db_source):
     if radius:
@@ -1106,7 +1172,9 @@ def db_tiles_generator(options, source, zooms, radius, db_source):
     size = len(tiles)
     return TileSet(iter(tiles), size)
 
+
 # tile set generator for -tiles
+
 
 def coord_tiles_generator(options, source, zooms, radius, db_source, db_filter):
     if radius:
@@ -1133,7 +1201,9 @@ def coord_tiles_generator(options, source, zooms, radius, db_source, db_filter):
 
     return TileSet(iter(tileset), size)
 
+
 # tile set factory
+
 
 def tileset(options, db, db_filter=False):
     """Return a TileSet object"""
@@ -1158,7 +1228,9 @@ def tileset(options, db, db_filter=False):
     except:
         raise
 
+
 # -- Database classes --------------------------------------------------------
+
 
 class TileDatabase:
     def __init__(self, fullname, tile_format, url_template):
@@ -1238,6 +1310,7 @@ class TileDatabase:
     def close(self):
         pass
 
+
 class SqliteDatabase(TileDatabase):
     def __init__(self, db_name, tile_format, url_template):
         TileDatabase.__init__(self, db_name, tile_format, url_template)
@@ -1259,6 +1332,7 @@ class SqliteDatabase(TileDatabase):
 
     def close(self):
         self.conn.close()
+
 
 class KaheloDatabase(SqliteDatabase):
     def __init__(self, db_name, tile_format, url_template):
@@ -1325,6 +1399,7 @@ class KaheloDatabase(SqliteDatabase):
             self.execute('SELECT x,y,zoom FROM tiles WHERE zoom = ?', zoom)
             R.extend(self.cursor.fetchall())
         return R
+
 
 class RmapsDatabase(SqliteDatabase):
     def __init__(self, db_name, tile_format, url_template):
@@ -1397,6 +1472,7 @@ class RmapsDatabase(SqliteDatabase):
             rows = self.cursor.fetchall()
             R.extend([(x, y, zoom) for (x, y, z) in rows])
         return R
+
 
 class FolderDatabase(TileDatabase):
     def __init__(self, db_name, tile_format, url_template):
@@ -1507,6 +1583,7 @@ class FolderDatabase(TileDatabase):
                 if not dirs and not files:
                     os.rmdir(root)
 
+
 class MaverickDatabase(FolderDatabase):
     def __init__(self, db_name, tile_format, url_template):
         FolderDatabase.__init__(self, db_name, tile_format, url_template)
@@ -1519,7 +1596,9 @@ class MaverickDatabase(FolderDatabase):
         re_name = r'(\d+)\.%s\.tile$' % self.tile_ext()
         return re_path + re_name
 
+
 # persistence of database properties
+
 
 class DatabaseProperties:
     def __init__(self, db_name):
@@ -1555,7 +1634,9 @@ class DatabaseProperties:
         except Exception as e:
             error('unable to write ' + self.filename + ' : ' + e)
 
+
 # database factory
+
 
 def db_factory(db_name):
     db_format, tile_format, url_template = DatabaseProperties(db_name).get()
@@ -1573,7 +1654,9 @@ def db_factory(db_name):
     else:
         error('unknown tile database format')
 
+
 # -- Traces ------------------------------------------------------------------
+
 
 class TileCounters:
     # helper class
@@ -1585,6 +1668,7 @@ class TileCounters:
         self.deleted = 0
         self.missing = 0
         self.failure = 0
+
 
 def tile_trace(options, x, y, zoom, index, size, msg):
     if options.verbose:
@@ -1599,8 +1683,10 @@ def tile_trace(options, x, y, zoom, index, size, msg):
         if pc1 < pc3:
             print('Tiles %.0f%% (%d/%d)' % (pc3, num, size))
 
+
 def tile_message(x, y, zoom, index, size, msg):
     print('Tile (%d,%d,%d) %d/%d: %s' % (x, y, zoom, index+1, size, msg))
+
 
 def display_report(options, *entries):
     print('-' * 29)
@@ -1613,15 +1699,19 @@ def display_report(options, *entries):
             v = value
         print('%-16s %12s' % (caption, v))
 
+
 def decsep(n):
     return '{:,}'.format(n)
+
 
 # -- Insertion strategies ----------------------------------------------------
 #
 # used by -insert and -import/-export
 
+
 # import actions
 NOP, INSERT, LATEST = range(3)
+
 
 # force mode: insert if something available
 FORCE_MODE = (
@@ -1639,6 +1729,7 @@ UPDATE_MODE = (
     ( INSERT,         NOP,            INSERT,         NOP),    # no date in src
     ( INSERT,         NOP,            LATEST,         LATEST)) # date available
 
+
 def insert_strategy(options, strategy, exists_src, date_src, exists_dst, date_dst):
     case_src = 0 if not exists_src else (1 if date_src is None else 2)
     case_dst = 0 if not exists_dst else (1 if date_dst is None else 2)
@@ -1652,21 +1743,27 @@ def insert_strategy(options, strategy, exists_src, date_src, exists_dst, date_ds
     else:
         return action == INSERT
 
+
 def should_insert(options, exists_src, date_src, exists_dst, date_dst):
     if options.force_insert:
         return insert_strategy(options, FORCE_MODE, exists_src, date_src, exists_dst, date_dst)
     else:
         return insert_strategy(options, UPDATE_MODE, exists_src, date_src, exists_dst, date_dst)
 
+
 # -- Commands ----------------------------------------------------------------
 
+
 # -version : version number --------------------------------------------------
+
 
 def print_version():
     print(IDENTITY)
     print(APPNAME, VERSION)
 
+
 # -license : display text of license -----------------------------------------
+
 
 def print_license():
     print(IDENTITY)
@@ -1674,10 +1771,13 @@ def print_license():
     print()
     print(LICENSE)
 
+
 # -help : print help ---------------------------------------------------------
+
 
 def print_help():
     ArgumentParser().print_help()
+
 
 def do_helphtml():
     if os.path.isfile(APPNAME + '.html'):
@@ -1687,7 +1787,9 @@ def do_helphtml():
 
     webbrowser.open(helpfile, new=2)
 
+
 # -describe: set and display database properties -----------------------------
+
 
 def do_describe(db_name, options):
 
@@ -1707,7 +1809,9 @@ def do_describe(db_name, options):
     print('tile_format ', tile_format)
     print('url_template', url_template)
 
+
 # -count : number of tiles for source and zoom -------------------------------
+
 
 def do_count(db_name, options):
     size, inserted, expired, missing = count(db_name, options)
@@ -1716,6 +1820,7 @@ def do_count(db_name, options):
                             ('Expired', expired),
                             ('Missing', missing))
     return size, inserted, expired, missing
+
 
 def count(db_name, options):
     db = db_factory(db_name)
@@ -1740,7 +1845,9 @@ def count(db_name, options):
 
     return tiles.size(), inserted, expired, tiles.size() - inserted - expired
 
+
 # -insert : download of tiles and insertion in database ----------------------
+
 
 def do_insert(db_name, options):
     db = db_factory(db_name)
@@ -1761,6 +1868,7 @@ def do_insert(db_name, options):
                                 ('Already present', counters.ignored),
                                 ('Inserted', counters.inserted),
                                 ('Missing', counters.missing))
+
 
 def insert_tile(tiles, db, options, x, y, zoom, index, n, counters):
     exists_dst, date_dst = db.exists(x, y, zoom)
@@ -1818,6 +1926,7 @@ def insert_tile(tiles, db, options, x, y, zoom, index, n, counters):
             if options.verbose:
                 print('Commit.')
 
+
 def tile_url(options, db, x, y, zoom):
     template = db.url_template()
     if template is None or template == '':
@@ -1836,7 +1945,9 @@ def tile_url(options, db, x, y, zoom):
 
     return url
 
+
 # -import : import tiles from tile database ----------------------------------
+
 
 def do_import(db_name, options):
     if options.db_source is None:
@@ -1847,6 +1958,7 @@ def do_import(db_name, options):
     tiles = tileset(options, db_arg, db_filter=options.inside)
 
     import_tiles(options, db_src, db_arg, tiles)
+
 
 def import_tiles(options, db_src, db_dst, tiles):
     n = tiles.size()
@@ -1860,6 +1972,7 @@ def import_tiles(options, db_src, db_dst, tiles):
                             ('Already present', counters.ignored),
                             ('Inserted', counters.inserted),
                             ('Missing', counters.missing))
+
 
 def import_tile(tiles, db_dst, x, y, zoom, options, index, n, counters, db_src):
     exists_dst, date_dst = db_dst.exists(x, y, zoom)
@@ -1911,11 +2024,14 @@ def import_tile(tiles, db_dst, x, y, zoom, options, index, n, counters, db_src):
     else:
         tile_trace(options, x, y, zoom, index, n, 'inserted')
 
+
 # -export : export tiles to tile database ------------------------------------
+
 
 def do_export(db_name, options):
     options.db_name, options.db_source = options.db_dest, options.db_name
     do_import(options.db_name, options)
+
 
 def do_export(db_name, options):
     if options.db_dest is None:
@@ -1927,7 +2043,9 @@ def do_export(db_name, options):
 
     import_tiles(options, db_arg, db_dst, tiles)
 
+
 # -delete: delete tiles from database ----------------------------------------
+
 
 def do_delete(db_name, options):
     db = db_factory(db_name)
@@ -1947,6 +2065,7 @@ def do_delete(db_name, options):
                             ('Failure', counters.failure),
                             ('Missing', counters.missing))
 
+
 def delete_tile(tiles, db, x, y, zoom, options, index, size, counters):
     exists, date = db.exists(x, y, zoom)
 
@@ -1964,7 +2083,9 @@ def delete_tile(tiles, db, x, y, zoom, options, index, size, counters):
     if index % options.database.commit_period == 0:
         db.commit()
 
+
 # -view : make image from gpx ------------------------------------------------
+
 
 def do_makeview(db_name, options):
     db = db_factory(db_name)
@@ -2047,6 +2168,7 @@ def do_makeview(db_name, options):
     display_report(options, ('Tiles in set', n),
                             ('Displayed', counters.available),
                             ('Missing', counters.missing))
+
 
 def makeview_tile(tiles, db, mosaic, draw, tile_width, x0, y0, x, y, zoom, options, index, n, counters):
     exists, date, tile = db.retrieve(x, y, zoom)
