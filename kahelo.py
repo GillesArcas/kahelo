@@ -40,10 +40,10 @@ IDENTITY = """\
 kahelo - tile management for GPS maps - kahelo.godrago.net\
 """
 
-VERSION = '1.00'
+VERSION = '1.10'
 
 LICENSE = """\
-Copyright (c) 2014 Gilles Arcas-Luque (gilles dot arcas at gmail dot com)
+Copyright (c) 2014-2022 Gilles Arcas-Luque (gilles dot arcas at gmail dot com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -96,6 +96,7 @@ tileset:
   -tiles xmin,ymin,xmax,ymax -zoom <zoom_level>
   -inside limits tilesets to the intersection with the argument database
   -zoom 1-14,16/12 zoom levels 1 to 14 and 16, level 12 subdivised into higher levels
+  -radius n or n,n,..., if multiple values, must be one value per zoom interval or value
 
 url template examples:
   OpenStreetMap: http://[abc].tile.openstreetmap.org/{z}/{x}/{y}.png
@@ -231,6 +232,7 @@ def complete_source(options):
             error('incorrect tile rectangle coordinates (xmin,ymin,xmax,ymax)')
 
     # replace zoom string with list of zoom values
+    zoom_arg = options.zoom
     if options.zoom is None:
         if options.project:
             options.zoom = list(range(MAXZOOM + 1))
@@ -246,16 +248,11 @@ def complete_source(options):
                                                or options.zoom_limit == 1000)):
             error('zoom limit must be an integer between 0 and %d' % MAXZOOM)
 
-    # convert radius argument to float
+    # replace radius argument with float value or list of float values (if multiple radius)
     if options.radius is None:
         pass
     else:
-        try:
-            options.radius = float(options.radius)
-        except:
-            error('radius must be a positive number')
-        if options.radius < 0:
-            error('radius must be a positive number')
+        options.radius = decode_radius(options.radius, zoom_arg)
 
     # used to find gpx files in path of project
     options.project_filename = None
@@ -286,7 +283,8 @@ class ProjectParser(argparse.ArgumentParser):
 
 
 def decode_range(s):
-    """Decode a range string into a list of integers: 8-10,12,14 --> [8, 9, 10, 12, 14]"""
+    """Decode a range string into a list of integers: 8-10,12,14 --> [8, 9, 10, 12, 14]
+    """
     R = []
     for x in s.split(','):
         m = re.search(r'(\d+)-(\d+)', x)
@@ -302,7 +300,8 @@ def decode_range(s):
 
 
 def decode_range_ex(s):
-    """Decode a zoom argument: 8-10,12,14/12 --> [8, 9, 10, 12, 14], 12"""
+    """Decode a zoom argument: 8-10,12,14/12 --> [8, 9, 10, 12, 14], 12
+    """
     if ('/') not in s:
         return decode_range(s), 1000
     else:
@@ -310,6 +309,44 @@ def decode_range_ex(s):
         dec_range = decode_range(zoom_range)
         dec_limit = int(zoom_limit) if zoom_limit.isdigit() else None
         return dec_range, dec_limit
+
+
+def decode_radius(sr, sz):
+    """Decode a radius argument: sz=8-10,12,14/12 and sr=10,5,2 --> [10, 10, 10, 5, 2]
+    """
+    # no multiple radius
+    if ',' not in sr:
+        try:
+            x = float(sr)
+        except:
+            error('radius must be a positive number')
+        if x < 0:
+            error('radius must be a positive number')
+        return x
+
+    lr = sr.split(',')
+    lz = sz.split(',')
+    if len(lr) != len(lz):
+        error('zoom and radius must have same number of ranges and values')
+
+    R = []
+    for r, z in zip(lr, lz):
+        try:
+            r = float(r)
+        except:
+            error('radius must be a positive number')
+        if r < 0:
+            error('radius must be a positive number')
+
+        m = re.search(r'(\d+)-(\d+)', z)
+        if m:
+            i1 = int(m.group(1))
+            i2 = int(m.group(2))
+            R.extend([r] * (i2 - i1 + 1))
+        else:
+            R.append(r)
+
+    return R
 
 
 def options_generate(options):
@@ -1079,8 +1116,12 @@ def tile_list_generator(options, db_source, db_filter):
     generator, source, zooms, radius = options_generate(options)
 
     tile_set = TileSet()
-    for zoom in zooms:
-        tile_set.extend(tile_list_generate_level(options, generator, source, zoom, radius, db_source, db_filter))
+    if radius is None or isinstance(radius, float):
+        for zoom in zooms:
+            tile_set.extend(tile_list_generate_level(options, generator, source, zoom, radius, db_source, db_filter))
+    else:
+        for zoom, radius_ in zip(zooms, radius):
+            tile_set.extend(tile_list_generate_level(options, generator, source, zoom, radius_, db_source, db_filter))
 
     return tile_set
 
@@ -1112,24 +1153,26 @@ def tile_list_generate_level(options, generator, source, zoom, radius, db_source
 
 
 def tile_project_generator(options, project, zoom, radius, db_source, db_filter):
-    if zoom is None:
-        all_zooms = list(range(MAXZOOM + 1))
-    else:
-        all_zooms = zoom
+    """Process each line in project handling intersection of -inside, -zoom and
+    -radius parameters.
+    """
+    if isinstance(radius, list):
+        error('No multiple radius for projects')
 
     tile_set = TileSet()
-    for z in all_zooms:
-        ts = []
-        for options_ in project_options(options):
-            options_.inside = options.inside or options_.inside
-            options_.zoom = [z] if z in options_.zoom else []
-            if radius is not None:
-                if options_.radius is None:
-                    options_.radius = radius
-                else:
-                    options_.radius = min(options_.radius, radius)
-            ts2 = tileset(options_, db_source, db_filter)
-            ts = set(ts).union(ts2)
+    for options_ in project_options(options):
+        options_.inside = options.inside or options_.inside
+        if zoom is not None:
+            options_.zoom = list(sorted(set(zoom).intersection(set(options_.zoom))))
+        if radius is not None:
+            if options_.radius is None:
+                options_.radius = radius
+            elif isinstance(options_.radius, float):
+                options_.radius = min(options_.radius, radius)
+            else:
+                options_.radius = [min(r, radius) for r in options_.radius]
+
+        ts = set(tileset(options_, db_source, db_filter))
         tile_set.extend(TileSet(ts, len(ts)))
 
     return tile_set
@@ -1206,7 +1249,8 @@ def coord_tiles_generator(options, source, zooms, radius, db_source, db_filter):
 
 
 def tileset(options, db, db_filter=False):
-    """Return a TileSet object"""
+    """Return a TileSet object
+    """
     try:
         if options.db_tiles:
             generator, source, zoom, radius = options_generate(options)

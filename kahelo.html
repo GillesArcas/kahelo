@@ -420,6 +420,8 @@ http://otile[1234].mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.jpg</pre>
         <li>When a project is given with a radius, the radius actually used is
         the minimum between this value and the radius given on each line of the
         project.</li>
+        <li>Radius with multiple values (e.g. <code>-zoom 0-12,13,14 -radius 10,5,2</code>)
+        cannot be used with projects.</li>
     </ul>
 
     <p style="font-size:1px">&nbsp;</p>
@@ -524,11 +526,8 @@ http://otile[1234].mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.jpg</pre>
         The radius enables to include in the tile set all tiles intersecting the
         circles with the given radius and centered on each point of the track or
         contour. It is given with the option <code>-radius</code> but may be
-        omitted.
-    </p>
-    <p>
-        When the radius is omitted, the default value is half the width of a
-        tile.
+        omitted. When the radius is omitted, the default value is half the width
+        of a tile.
     </p>
     <p>
         Note that:
@@ -540,6 +539,20 @@ http://otile[1234].mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.jpg</pre>
     <pre>
 -radius 1.5
 -radius 0</pre>
+
+    <p>
+        The radius parameter can also specify several values, one value for each
+        range or value of the <code>-zoom</code> parameter. For instance:
+    </p>
+    <pre>
+-zoom 0-12,13,14 -radius 10,5,2</pre>
+
+    <p>
+        This uses a radius of 10 for the zoom range 0-10, a radius of 5 for the
+        zoom value 13, and a radius of 2 for the zoom value of 14.
+    </p>
+
+    </pre>
 
     <p style="font-size:1px">&nbsp;</p>
     <hr id="Commands" />
