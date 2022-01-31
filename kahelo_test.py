@@ -57,7 +57,7 @@ def main():
             for db2 in ('kahelo', 'rmaps', 'folder', 'maverick'):
                 print('---', db1, db2)
                 test_db(url, db1, 'server', db2, 'png', trace='-verbose') # jpg
-        
+
         test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-quiet')
         test_db(url, 'rmaps', 'server', 'maverick', 'jpg', trace='-verbose')
 
@@ -280,38 +280,41 @@ def test_db(url, db_format, tile_format, db_dest_format, tile_dest_format, trace
 
 
 def test_view():
+    view_to_png = '-view tests/easter.db -zoom 12 -project test.project -image test.png'
+    view_to_jpg = '-view tests/easter.db -zoom 12 -project test.project -image test.jpg'
+
     kahelo.resetconfig()
     kahelo.setconfig('view', 'draw_tracks', 'False')
     kahelo.setconfig('view', 'draw_tile_limits', 'False')
     kahelo.setconfig('view', 'draw_tile_width', 'False')
     kahelo.setconfig('view', 'draw_circles', 'False')
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
+    kahelo.kahelo(view_to_png)
     check('check view 1', compare_files(os.path.join('tests', 'easter12a.png'), 'test.png'))
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
+    kahelo.kahelo(view_to_jpg)
     check('check view 1', compare_files(os.path.join('tests', 'easter12a.jpg'), 'test.jpg'))
 
     kahelo.setconfig('view', 'draw_tracks', 'True')
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
+    kahelo.kahelo(view_to_png)
     check('check view 1', compare_files(os.path.join('tests', 'easter12b.png'), 'test.png'))
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
+    kahelo.kahelo(view_to_jpg)
     check('check view 1', compare_files(os.path.join('tests', 'easter12b.jpg'), 'test.jpg'))
 
     kahelo.setconfig('view', 'draw_tile_limits', 'True')
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
+    kahelo.kahelo(view_to_png)
     check('check view 1', compare_files(os.path.join('tests', 'easter12c.png'), 'test.png'))
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
+    kahelo.kahelo(view_to_jpg)
     check('check view 1', compare_files(os.path.join('tests', 'easter12c.jpg'), 'test.jpg'))
 
     kahelo.setconfig('view', 'draw_tile_width', 'True')
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
+    kahelo.kahelo(view_to_png)
     check('check view 1', compare_files(os.path.join('tests', 'easter12d.png'), 'test.png'))
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
+    kahelo.kahelo(view_to_jpg)
     check('check view 1', compare_files(os.path.join('tests', 'easter12d.jpg'), 'test.jpg'))
 
     kahelo.setconfig('view', 'draw_circles', 'True')
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.png')
+    kahelo.kahelo(view_to_png)
     check('check view 1', compare_files(os.path.join('tests', 'easter12e.png'), 'test.png'))
-    kahelo.kahelo('-view tests/easter.db -zoom 12 -project test.project -image test.jpg')
+    kahelo.kahelo(view_to_jpg)
     check('check view 1', compare_files(os.path.join('tests', 'easter12e.jpg'), 'test.jpg'))
 
     os.remove('test.png')
@@ -378,7 +381,7 @@ def test_zoom_subdivision(url):
 
 def test_inside():
     """
-    -inside limits de tile set to the tiles defined by the tile set in the 
+    -inside limits de tile set to the tiles defined by the tile set in the
     command line and already in the datebase.
     """
     temp = sys.stdout
@@ -395,6 +398,6 @@ def test_inside():
     check('check inside', compare_texts('tests/test_inside.txt', 'test.txt'))
     os.remove('test.txt')
 
-    
+
 if __name__ == '__main__':
     main()
