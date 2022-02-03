@@ -67,6 +67,7 @@ def main():
         test_tile_coords(db_name)
         test_zoom_subdivision(url)
         test_inside()
+        test_overlapping_gpx()
 
         if test_result is True:
             print('All tests ok.')
@@ -75,9 +76,9 @@ def main():
 
     finally:
         kahelo.stop_server()
-        os.remove('test.gpx')
-        os.remove('test2.gpx')
-        os.remove('test.project')
+        if 1:
+            clean_db()
+            clean_sources()
         shutil.move(config_filename + '.backup', config_filename)
 
 
@@ -89,6 +90,19 @@ GPX1 = """\
             <trkpt lat="-27.0572913" lon="-109.3805695"></trkpt>
             <trkpt lat="-27.1801341" lon="-109.4464874"></trkpt>
             <trkpt lat="-27.1068114" lon="-109.2312241"></trkpt>
+        </trkseg>
+    </trk>
+</gpx>
+"""
+
+GPX3 = """\
+<?xml version="1.0"?>
+<gpx version="1.0" xmlns="http://www.topografix.com/GPX/1/0">
+    <trk>
+        <trkseg>
+            <trkpt lat="-27.1801341" lon="-109.4464874"></trkpt>
+            <trkpt lat="-27.1068114" lon="-109.2312241"></trkpt>
+            <trkpt lat="-27.0572913" lon="-109.3805695"></trkpt>
         </trkseg>
     </trk>
 </gpx>
@@ -121,10 +135,15 @@ PROJECT = """
 -contour test.gpx -zoom 12
 """
 
+PROJECT2 = """
+-track test.gpx -zoom 13
+-track test3.gpx -zoom 13
+"""
+
 
 def define_tile_sets():
-    # for reference, number of tiles for test track
-    #             10      11      12      13      14
+    # for reference, number of tiles for test track (GPX1)
+    # zoom        10      11      12      13      14
     # track        4       9      11      23      41
     # contour      4       9      12      25      57
 
@@ -134,8 +153,14 @@ def define_tile_sets():
     with open('test2.gpx', 'wt') as f:
         f.writelines(GPX2)
 
+    with open('test3.gpx', 'wt') as f:
+        f.writelines(GPX3)
+
     with open('test.project', 'wt') as f:
         f.writelines(PROJECT)
+
+    with open('test2.project', 'wt') as f:
+        f.writelines(PROJECT2)
 
 
 # Helpers
@@ -195,12 +220,15 @@ def remove_db(db):
         os.remove(db + '.properties')
 
 
-def clean():
+def clean_db():
     remove_db('test.db')
     remove_db('test2.db')
     remove_db('test3.db')
     remove_db('test4.db')
-    for x in ('test1.png', 'test2.png'):
+
+
+def clean_sources():
+    for x in ('test.gpx', 'test2.gpx', 'test3.gpx', 'test.project', 'test2.project'):
         if os.path.isfile(x):
             os.remove(x)
 
@@ -210,7 +238,7 @@ def clean():
 
 def test_db(url, db_format, tile_format, db_dest_format, tile_dest_format, trace=''):
     # be sure context is clean
-    clean()
+    clean_db()
 
     # describe test databases
     kahelo.kahelo('-describe test.db  -db %s -tile_f %s -url %s %s' % (db_format, tile_format, url, trace))
@@ -276,7 +304,7 @@ def test_db(url, db_format, tile_format, db_dest_format, tile_dest_format, trace
     db3.close()
     db4.close()
 
-    clean()
+    clean_db()
 
 
 def test_view():
@@ -381,7 +409,7 @@ def test_zoom_subdivision(url):
 
 def test_inside():
     """
-    -inside limits de tile set to the tiles defined by the tile set in the
+    -inside limits the tile set to the tiles defined by the tile set in the
     command line and already in the datebase.
     """
     temp = sys.stdout
@@ -396,6 +424,35 @@ def test_inside():
         finally:
             sys.stdout = temp
     check('check inside', compare_texts('tests/test_inside.txt', 'test.txt'))
+    os.remove('test.txt')
+
+
+def test_overlapping_gpx():
+    """
+    check counts on overlapping gpx, check insertion counters
+    """
+    temp = sys.stdout
+    with open('test.txt', 'wt') as sys.stdout:
+        try:
+            remove_db('test.db')
+            url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
+            kahelo.kahelo('-describe test.db  -db rmaps -tile_f server -url %s' % url)
+            db = kahelo.db_factory('test.db')
+            kahelo.kahelo('-insert test.db -track test.gpx -zoom 13 -verbose')
+            kahelo.kahelo('-delete test.db -records')
+            kahelo.kahelo('-insert test.db -track test3.gpx -zoom 13 -verbose')
+            kahelo.kahelo('-delete test.db -records')
+            kahelo.kahelo('-insert test.db -project test2.project -verbose')
+        finally:
+            sys.stdout = temp
+
+    # remove timing otherwise cannot compare
+    with open('test.txt') as f:
+        lines = f.readlines()
+    with open('test.txt', 'wt') as f:
+        f.write(''.join([line for line in lines if not line.startswith('Elapsed')]))
+
+    check('check overlapping', compare_texts('tests/test_overlapping.txt', 'test.txt'))
     os.remove('test.txt')
 
 
