@@ -3,8 +3,6 @@ Test suite for kahelo.
 $ ./kahelo_test.py
 """
 
-from __future__ import print_function
-
 import os
 import sys
 import shutil
