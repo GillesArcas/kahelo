@@ -975,35 +975,15 @@ def track_points_project(project_filename, zoom, options):
 # -- Generation of tile sets -------------------------------------------------
 
 
-# tile set generator
-# - iterator (possibly yield generator)
-# - precalculated full size (taking into account tile subdivision)
-
-
-class TileSet:
-    def __init__(self, gen=None, size=0):
-        if gen is None:
-            self.gen = itertools.chain()
-            self.size_ = 0
-        else:
-            self.gen = gen
-            self.size_ = size
-
-    def __iter__(self):
-        return self.gen
-
+class TileSet(set):
     def size(self):
-        return self.size_
+        return len(self)
 
-    def extend(self, tileset):
-        self.gen = itertools.chain(self.gen, tileset.gen)
-        self.size_ += tileset.size_
+    def sorted(self):
+        return sorted(self, key=lambda x: (x[2], *x[:2]))
 
     def binding_box(self):
-        # has to copy the tile stream consumed by the call to binding_box
-        tiles = list(self.gen)
-        self.gen = iter(tiles)
-        return binding_box(tiles)
+        return binding_box(self)
 
 
 # subdivision generator
@@ -1013,11 +993,13 @@ class TileSet:
 
 
 def subdivise(tiles, zoom_current, zoom_target):
+    coords = list()
     ratio = 2 ** (zoom_target - zoom_current)
     for x, y in tiles:
         for X in range(ratio):
             for Y in range(ratio):
-                yield x * ratio + X, y * ratio + Y, zoom_target
+                coords.append((x * ratio + X, y * ratio + Y, zoom_target))
+    return coords
 
 
 # filtering with database and zoom
@@ -1028,12 +1010,9 @@ def filter_tileset_with_db(tileset, db, zoom):
     Return the list of tiles from tileset less the tiles absent from db. This is
     activated with the -inside parameter and useless with some commands (-insert
     and -import).
-    Return a list because its needs to be scanned several times (starting with
-    length).
     """
-
     db_tiles = db.list_tiles((zoom,))
-    tileset = list(set(db_tiles).intersection(tileset))
+    tileset = set(db_tiles).intersection(tileset)
     return tileset, len(tileset)
 
 
@@ -1118,10 +1097,10 @@ def tile_list_generator(options, db_source, db_filter):
     tile_set = TileSet()
     if radius is None or isinstance(radius, float):
         for zoom in zooms:
-            tile_set.extend(tile_list_generate_level(options, generator, source, zoom, radius, db_source, db_filter))
+            tile_set.update(tile_list_generate_level(options, generator, source, zoom, radius, db_source, db_filter))
     else:
         for zoom, radius_ in zip(zooms, radius):
-            tile_set.extend(tile_list_generate_level(options, generator, source, zoom, radius_, db_source, db_filter))
+            tile_set.update(tile_list_generate_level(options, generator, source, zoom, radius_, db_source, db_filter))
 
     return tile_set
 
@@ -1146,7 +1125,7 @@ def tile_list_generate_level(options, generator, source, zoom, radius, db_source
     else:
         tileset, size = gen, size
 
-    return TileSet(tileset, size)
+    return TileSet(tileset)
 
 
 # tile set generator for -project
@@ -1172,8 +1151,8 @@ def tile_project_generator(options, project, zoom, radius, db_source, db_filter)
             else:
                 options_.radius = [min(r, radius) for r in options_.radius]
 
-        ts = set(tileset(options_, db_source, db_filter))
-        tile_set.extend(TileSet(ts, len(ts)))
+        ts = tileset(options_, db_source, db_filter)
+        tile_set.update(ts)
 
     return tile_set
 
@@ -1212,8 +1191,7 @@ def db_tiles_generator(options, source, zooms, radius, db_source):
         error('radius is not used for -record tile set')
 
     tiles = db_source.list_tiles(zooms)
-    size = len(tiles)
-    return TileSet(iter(tiles), size)
+    return TileSet(tiles)
 
 
 # tile set generator for -tiles
@@ -1234,6 +1212,7 @@ def coord_tiles_generator(options, source, zooms, radius, db_source, db_filter):
 
     # gen is a generator not a list, because we do not want to store a very
     # large set before filtering against db
+    # TODO check
     gen = ((x, y, zoom) for x in range(xmin, xmax + 1) for y in range(ymin, ymax + 1))
     size = (xmax - xmin + 1) * (ymax - ymin + 1)
 
@@ -1242,7 +1221,7 @@ def coord_tiles_generator(options, source, zooms, radius, db_source, db_filter):
     else:
         tileset, size = gen, size
 
-    return TileSet(iter(tileset), size)
+    return TileSet(tileset)
 
 
 # tile set factory
@@ -1714,9 +1693,9 @@ class TileCounters:
         self.failure = 0
 
 
-def tile_trace(options, x, y, zoom, index, size, msg):
+def tile_trace(options, x, y, zoom, index, size, msg, counters=None):
     if options.verbose:
-        tile_message(x, y, zoom, index, size, msg)
+        tile_message(x, y, zoom, index, size, msg, counters)
     elif options.quiet:
         pass
     else:
@@ -1728,8 +1707,11 @@ def tile_trace(options, x, y, zoom, index, size, msg):
             print('Tiles %.0f%% (%d/%d)' % (pc3, num, size))
 
 
-def tile_message(x, y, zoom, index, size, msg):
-    print('Tile (%d,%d,%d) %d/%d: %s' % (x, y, zoom, index+1, size, msg))
+def tile_message(x, y, zoom, index, size, msg, counters=None):
+    if counters is None:
+        print('Tile (%d,%d,%d) %d/%d: %s' % (x, y, zoom, index+1, size, msg))
+    else:
+        print('Tile (%d,%d,%d) %d/%d: %s (%d/%d)' % (x, y, zoom, index+1, size, msg, counters.inserted, counters.to_be_inserted))
 
 
 def display_report(options, *entries):
@@ -1869,12 +1851,16 @@ def do_count(db_name, options):
 def count(db_name, options):
     db = db_factory(db_name)
     tiles = tileset(options, db, db_filter=options.inside)
+    return count_tileset(tiles, db, options)
+
+
+def count_tileset(tiles, db, options):
     n = tiles.size()
 
     inserted = 0
     expired = 0
 
-    for index, (x, y, zoom) in enumerate(tiles):
+    for index, (x, y, zoom) in enumerate(tiles.sorted()):
         exists, date = db.exists(x, y, zoom)
         if exists:
             if date is None or date > options.database.expiry_date:
@@ -1896,12 +1882,18 @@ def count(db_name, options):
 def do_insert(db_name, options):
     db = db_factory(db_name)
     tiles = tileset(options, db, db_filter=options.inside)
-    n = tiles.size()
 
+    options_ = copy.copy(options)
+    options_.verbose = False
+    options_.quiet = True
+    size, inserted, expired, missing = count_tileset(tiles, db, options_)
+
+    n = tiles.size()
     counters = TileCounters()
+    counters.to_be_inserted = size - inserted
 
     try:
-        for index, (x, y, zoom) in enumerate(tiles):
+        for index, (x, y, zoom) in enumerate(tiles.sorted()):
             insert_tile(tiles, db, options, x, y, zoom, index, n, counters)
     finally:
         # final commit even if interrupted by user
@@ -1964,7 +1956,7 @@ def insert_tile(tiles, db, options, x, y, zoom, index, n, counters):
 
         counters.inserted += 1
         msg = 'updated' if exists_dst else 'inserted'
-        tile_trace(options, x, y, zoom, index, n, '%s : %s' % (url, msg))
+        tile_trace(options, x, y, zoom, index, n, '%s : %s' % (url, msg), counters)
         if counters.inserted % options.database.commit_period == 0:
             db.commit()
             if options.verbose:
@@ -2008,7 +2000,7 @@ def import_tiles(options, db_src, db_dst, tiles):
     n = tiles.size()
     counters = TileCounters()
 
-    for index, (x, y, zoom) in enumerate(tiles):
+    for index, (x, y, zoom) in enumerate(tiles.sorted()):
         import_tile(tiles, db_dst, x, y, zoom, options, index, n, counters, db_src)
     db_dst.commit()
 
@@ -2098,7 +2090,7 @@ def do_delete(db_name, options):
     size = tiles.size()
     counters = TileCounters()
 
-    for index, (x, y, zoom) in enumerate(tiles):
+    for index, (x, y, zoom) in enumerate(tiles.sorted()):
         delete_tile(tiles, db, x, y, zoom, options, index, size, counters)
 
     db.commit()
@@ -2165,7 +2157,7 @@ def do_makeview(db_name, options):
     draw = ImageDraw.Draw(mosaic)
 
     # draw tiles
-    for index, (x, y, z) in enumerate(tiles):
+    for index, (x, y, z) in enumerate(tiles.sorted()):
         makeview_tile(tiles, db, mosaic, draw, tile_width, x0, y0, x, y, zoom, options, index, n, counters)
 
     # draw points at track coordinates
@@ -2342,7 +2334,7 @@ def do_statistics(db_name, options):
     xmax = [0] * maxzoomp1
     ymax = [0] * maxzoomp1
 
-    for index, (x, y, zoom) in enumerate(tiles):
+    for index, (x, y, zoom) in enumerate(tiles.sorted()):
         exists, date, buffer = db.retrieve_buffer(x, y, zoom)
         if exists:
             sizes.append(len(buffer))
