@@ -6,8 +6,8 @@ import re
 import math
 import argparse
 import webbrowser
-import itertools
 import random
+import copy
 
 if sys.version_info < (3,):
     import ConfigParser as configparser
@@ -2333,9 +2333,13 @@ def do_statistics(db_name, options):
     ymin = [2 ** maxzoomp1] * maxzoomp1
     xmax = [0] * maxzoomp1
     ymax = [0] * maxzoomp1
+    count = [0] * maxzoomp1
+    width = [0] * maxzoomp1
 
     for index, (x, y, zoom) in enumerate(tiles.sorted()):
         exists, date, buffer = db.retrieve_buffer(x, y, zoom)
+        count[zoom] += 1
+        width[zoom] += tile_distance_km(x, y, x + 1, y, zoom)
         if exists:
             sizes.append(len(buffer))
             size[zoom].append(len(buffer))
@@ -2349,15 +2353,18 @@ def do_statistics(db_name, options):
 
     display_report(options)
     print('-' * 29)
-    print('%4s %6s %6s %6s %8s %12s (sizes in byte)' % ('zoom', 'count', 'min', 'max', 'average', 'total'))
+    print('%4s %9s %7s %6s %6s %8s %12s (width in km, sizes in bytes)' % ('zoom', 'width', 'count', 'min', 'max', 'average', 'total'))
 
     for zoom in [z for z,v in enumerate(size) if len(v) > 0]:
+        average_width = width[zoom] / count[zoom]
+        sw = '{:,.2f}'.format(average_width)
+
         slen  = decsep(len(size[zoom]))
         smin  = decsep(min(size[zoom]))
         smax  = decsep(max(size[zoom]))
         smean = decsep(sum(size[zoom]) // len(size[zoom]))
         stot  = decsep(sum(size[zoom]))
-        print('%4d %6s %6s %6s %8s %12s' % (zoom, slen, smin, smax, smean, stot))
+        print('%4d %9s %7s %6s %6s %8s %12s' % (zoom, sw, slen, smin, smax, smean, stot))
 
     if len(sizes) == 0:
         slen, smin, smax, smean, stot = [0] * 5
@@ -2367,7 +2374,7 @@ def do_statistics(db_name, options):
         smax  = decsep(max(sizes))
         smean = decsep(sum(sizes) // len(sizes))
         stot  = decsep(sum(sizes))
-    print('%4s %6s %6s %6s %8s %12s' % ('all', slen, smin, smax, smean, stot))
+    print('%4s %9s %7s %6s %6s %8s %12s' % ('all', '', slen, smin, smax, smean, stot))
     print('-' * 29)
 
     print('%4s %6s %6s %6s %6s (boxing area in tile units)' % ('zoom', 'x min', 'y min', 'x max', 'y max'))
