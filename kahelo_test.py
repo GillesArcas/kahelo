@@ -66,6 +66,7 @@ def main():
         test_zoom_subdivision(url)
         test_inside()
         test_overlapping_gpx()
+        test_radius()
 
         if test_result is True:
             print('All tests ok.')
@@ -138,6 +139,13 @@ PROJECT2 = """
 -track test3.gpx -zoom 13
 """
 
+PROJECT3 = """
+-track test.gpx -zoom  0-10 -radius 100
+-track test.gpx -zoom 11-12 -radius 10
+-track test.gpx -zoom 13    -radius 5
+-track test.gpx -zoom 14    -radius 2
+"""
+
 
 def define_tile_sets():
     # for reference, number of tiles for test track (GPX1)
@@ -159,6 +167,9 @@ def define_tile_sets():
 
     with open('test2.project', 'wt') as f:
         f.writelines(PROJECT2)
+
+    with open('test3.project', 'wt') as f:
+        f.writelines(PROJECT3)
 
 
 # Helpers
@@ -200,6 +211,10 @@ def compare_texts(name1, name2):
         lines1 = f.read().splitlines()
     with open(name2) as f:
         lines2 = f.read().splitlines()
+
+    lines1 = filter(lambda line: not line.startswith('Elapsed'), lines1)
+    lines2 = filter(lambda line: not line.startswith('Elapsed'), lines2)
+
     for index, (line1, line2) in enumerate(zip(lines1, lines2)):
         if line1 != line2:
             print('Lines #%d are different in file %s and file %s' % (index, name1, name2))
@@ -226,7 +241,7 @@ def clean_db():
 
 
 def clean_sources():
-    for x in ('test.gpx', 'test2.gpx', 'test3.gpx', 'test.project', 'test2.project'):
+    for x in ('test.gpx', 'test2.gpx', 'test3.gpx', 'test.project', 'test2.project', 'test3.project'):
         if os.path.isfile(x):
             os.remove(x)
 
@@ -444,13 +459,30 @@ def test_overlapping_gpx():
         finally:
             sys.stdout = temp
 
-    # remove timing otherwise cannot compare
-    with open('test.txt') as f:
-        lines = f.readlines()
-    with open('test.txt', 'wt') as f:
-        f.write(''.join([line for line in lines if not line.startswith('Elapsed')]))
-
     check('check overlapping', compare_texts('tests/test_overlapping.txt', 'test.txt'))
+    os.remove('test.txt')
+
+
+def test_radius():
+    """
+    check radius
+    """
+    temp = sys.stdout
+    with open('test.txt', 'wt') as sys.stdout:
+        try:
+            kahelo.kahelo('-stat tests/easter.db -track test.gpx -zoom 0-10,11-12,13,14 -radius 100,10,5,2')
+        finally:
+            sys.stdout = temp
+    check('check radius 1', compare_texts('tests/test_radius.txt', 'test.txt'))
+
+    with open('test.txt', 'wt') as sys.stdout:
+        try:
+            kahelo.kahelo('-stat tests/easter.db -project test3.project')
+        finally:
+            sys.stdout = temp
+    check('check radius 2', compare_texts('tests/test_radius.txt', 'test.txt'))
+
+
     os.remove('test.txt')
 
 
