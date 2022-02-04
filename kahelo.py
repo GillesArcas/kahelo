@@ -154,6 +154,7 @@ class ArgumentParser(argparse.ArgumentParser):
         xgroup.add_argument('-tracks'  , action='store',      dest='tracks',      help='track filename')
         xgroup.add_argument('-contour' , action='store',      dest='contour',     help='contour filename')
         xgroup.add_argument('-contours', action='store',      dest='contours',    help='contour filename')
+        xgroup.add_argument('-disk'    , action='store',      dest='disk',        help='point coordinates')
         xgroup.add_argument('-project' , action='store',      dest='project',     help='project filename')
         xgroup.add_argument('-records' , action='store_true', dest='db_tiles',    help='tiles from database')
         xgroup.add_argument('-tiles'   , action='store',      dest='coord_tiles', help='tile coordinates')
@@ -215,6 +216,8 @@ def complete_source(options):
         options.tile_generator, options.tile_source = tile_contour_generator, options.contour
     elif options.contours:
         options.tile_generator, options.tile_source = tile_contours_generator, options.contours
+    elif options.disk:
+        options.tile_generator, options.tile_source = tile_disk_generator, options.disk
     elif options.project:
         options.tile_generator, options.tile_source = tile_project_generator, options.project
     elif options.db_tiles:
@@ -266,12 +269,15 @@ class ProjectParser(argparse.ArgumentParser):
         group.add_argument('-tracks'  , action='store', dest='tracks')
         group.add_argument('-contour' , action='store', dest='contour')
         group.add_argument('-contours', action='store', dest='contours')
+        group.add_argument('-disk'    , action='store', dest='disk')
         group.add_argument('-project' , action='store', dest='project')
         group.add_argument('-records' , action='store_true', dest='db_tiles')
         group.add_argument('-tiles'   , action='store', dest='coord_tiles')
         self.add_argument('-zoom'     , action='store', dest='zoom')
         self.add_argument('-radius'   , action='store', dest='radius')
         self.add_argument('-inside'   , action='store_true', dest='inside')
+        self.add_argument('-verbose', action='store_true', dest='verbose')
+        self.add_argument('-quiet',   action='store_true', dest='quiet')
 
     def error(self, msg):
         error('incorrect project syntax: ' + msg)
@@ -1041,6 +1047,24 @@ def tile_track_generator(options, gpx_filename, zoom, radius):
     return tiles
 
 
+def tile_disk_generator(options, point_spec, zoom, radius):
+    # returns list of tiles for disk
+
+    # convert coordinates, ignore from third element allowing to add comment in command line
+    x, y, *_ = point_spec.split(',')
+    try:
+        x = float(x)
+        y = float(y)
+    except ValueError:
+        error('point coordinates must be float')
+
+    segment = [deg2tilecoord(lat, lon, zoom) for lat,lon in [(x, y), (x, y)]]
+    segments = [segment]
+
+    tiles = expand_tiles(segments, options, zoom, radius)
+    return tiles
+
+
 def tile_tracks_generator(options, gpx_filename, zoom, radius):
     # return list of tiles for tracks
     # each segment is considered as a separate track
@@ -1093,6 +1117,8 @@ def tile_list_generator(options, db_source, db_filter):
     Return dedicated iterator with total and reduced lengths.
     """
     generator, source, zooms, radius = options_generate(options)
+    if options.quiet is False:
+        print(source)
 
     tile_set = TileSet()
     if radius is None or isinstance(radius, float):
@@ -1106,8 +1132,8 @@ def tile_list_generator(options, db_source, db_filter):
 
 
 def tile_list_generate_level(options, generator, source, zoom, radius, db_source, db_filter):
-    print(source, zoom)
-    source = find_file(source, options)
+    if not options.disk:
+        source = find_file(source, options)
 
     if zoom <= options.zoom_limit:
         # no subdivision required
@@ -1141,6 +1167,8 @@ def tile_project_generator(options, project, zoom, radius, db_source, db_filter)
     tile_set = TileSet()
     for options_ in project_options(options):
         options_.inside = options.inside or options_.inside
+        options_.quiet = options.quiet or options_.quiet
+        options_.verbose = options.verbose or options_.verbose
         if zoom is not None:
             options_.zoom = list(sorted(set(zoom).intersection(set(options_.zoom))))
         if radius is not None:
@@ -2169,7 +2197,7 @@ def do_makeview(db_name, options):
             draw.rectangle((X-2, Y-2, X + 2, Y + 2), fill=(255,0,0))
 
     # draw track
-    if options.view.draw_tracks and not options.db_tiles:
+    if options.view.draw_tracks and not options.db_tiles and not options.disk:
         draw_tracks(options, draw, source, x0, y0, zoom, tile_width)
 
     # draw circles
@@ -2358,7 +2386,6 @@ def do_statistics(db_name, options):
     for zoom in [z for z,v in enumerate(size) if len(v) > 0]:
         average_width = width[zoom] / count[zoom]
         sw = '{:,.2f}'.format(average_width)
-
         slen  = decsep(len(size[zoom]))
         smin  = decsep(min(size[zoom]))
         smax  = decsep(max(size[zoom]))

@@ -49,9 +49,6 @@ zoom     lat min    long min     lat max    long max (boxing area in degrees)
   12  -26.980829 -109.511719  -27.215556 -109.248047
   13  -27.019984 -109.467773  -27.176469 -109.248047
   14  -27.039557 -109.467773  -27.196014 -109.226074
-test.gpx 10
-test.gpx 11
-test.gpx 12
 -----------------------------
 Elapsed time         00:00:00
 -----------------------------
@@ -70,8 +67,6 @@ zoom     lat min    long min     lat max    long max (boxing area in degrees)
   10  -26.745610 -109.687500  -27.059126 -109.335938
   11  -26.902477 -109.687500  -27.215556 -109.160156
   12  -26.980829 -109.511719  -27.215556 -109.248047
-test.gpx 10
-test.gpx 11
 -----------------------------
 Elapsed time         00:00:00
 -----------------------------
@@ -87,9 +82,6 @@ zoom  x min  y min  x max  y max (boxing area in tile units)
 zoom     lat min    long min     lat max    long max (boxing area in degrees)
   10  -26.745610 -109.687500  -27.059126 -109.335938
   11  -26.902477 -109.687500  -27.215556 -109.160156
-test2.gpx 10
-test2.gpx 11
-test2.gpx 12
 -----------------------------
 Elapsed time         00:00:00
 -----------------------------

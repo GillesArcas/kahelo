@@ -470,14 +470,14 @@ def test_radius():
     temp = sys.stdout
     with open('test.txt', 'wt') as sys.stdout:
         try:
-            kahelo.kahelo('-stat tests/easter.db -track test.gpx -zoom 0-10,11-12,13,14 -radius 100,10,5,2')
+            kahelo.kahelo('-stat tests/easter.db -track test.gpx -zoom 0-10,11-12,13,14 -radius 100,10,5,2 -quiet')
         finally:
             sys.stdout = temp
     check('check radius 1', compare_texts('tests/test_radius.txt', 'test.txt'))
 
     with open('test.txt', 'wt') as sys.stdout:
         try:
-            kahelo.kahelo('-stat tests/easter.db -project test3.project')
+            kahelo.kahelo('-stat tests/easter.db -project test3.project -quiet')
         finally:
             sys.stdout = temp
     check('check radius 2', compare_texts('tests/test_radius.txt', 'test.txt'))

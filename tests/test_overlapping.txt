@@ -2,7 +2,7 @@ db_name      test.db
 db_format    RMAPS
 tile_format  SERVER
 url_template http://127.0.0.1:8000/{zoom}/{x}/{y}.jpg
-test.gpx 13
+test.gpx
 Tile (1604,4738,13) 1/23: http://127.0.0.1:8000/13/1604/4738.jpg : not found
 Tile (1604,4739,13) 2/23: http://127.0.0.1:8000/13/1604/4739.jpg : not found
 Tile (1605,4736,13) 3/23: http://127.0.0.1:8000/13/1605/4736.jpg : inserted (1/23)
@@ -32,6 +32,7 @@ Tiles in set               23
 Already present             0
 Inserted                   21
 Missing                     2
+Elapsed time         00:00:01
 Tiles 4% (1/21)
 Tiles 9% (2/21)
 Tiles 14% (3/21)
@@ -58,7 +59,8 @@ Tiles in set               21
 Deleted                    21
 Failure                     0
 Missing                     0
-test3.gpx 13
+Elapsed time         00:00:00
+test3.gpx
 Tile (1604,4738,13) 1/22: http://127.0.0.1:8000/13/1604/4738.jpg : not found
 Tile (1604,4739,13) 2/22: http://127.0.0.1:8000/13/1604/4739.jpg : not found
 Tile (1605,4738,13) 3/22: http://127.0.0.1:8000/13/1605/4738.jpg : inserted (1/22)
@@ -87,6 +89,7 @@ Tiles in set               22
 Already present             0
 Inserted                   20
 Missing                     2
+Elapsed time         00:00:02
 Tiles 5% (1/20)
 Tiles 10% (2/20)
 Tiles 15% (3/20)
@@ -112,8 +115,9 @@ Tiles in set               20
 Deleted                    20
 Failure                     0
 Missing                     0
-test.gpx 13
-test3.gpx 13
+Elapsed time         00:00:00
+test.gpx
+test3.gpx
 Tile (1604,4738,13) 1/25: http://127.0.0.1:8000/13/1604/4738.jpg : not found
 Tile (1604,4739,13) 2/25: http://127.0.0.1:8000/13/1604/4739.jpg : not found
 Tile (1605,4736,13) 3/25: http://127.0.0.1:8000/13/1605/4736.jpg : inserted (1/25)
@@ -145,3 +149,4 @@ Tiles in set               25
 Already present             0
 Inserted                   23
 Missing                     2
+Elapsed time         00:00:01
