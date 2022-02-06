@@ -7,6 +7,7 @@ import os
 import sys
 import shutil
 import subprocess
+import time
 
 import kahelo
 
@@ -41,7 +42,14 @@ def main():
         creationflags = subprocess.CREATE_NEW_CONSOLE
 
     p = subprocess.Popen('kahelo -server easter.db', shell=shell, creationflags=creationflags)
-    url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
+    while 1:
+        # wait until kahelo.config available on disk (if absent when launching tests)
+        try:
+            url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
+            time.sleep(0.1)
+            break
+        except:
+            pass
 
     # make sure tests are done with known configuration
     config_filename = kahelo.configfilename()
