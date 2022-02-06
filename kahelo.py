@@ -992,13 +992,10 @@ class TileSet(set):
         return binding_box(self)
 
 
-# subdivision generator
-# created with a list of (x, y)
-# when iterating, a tile at level current_zoom is subdivised at level
-# target_zoom
-
-
 def subdivise(tiles, zoom_current, zoom_target):
+    """
+    Subdivise a list of tiles at level zoom_current into tiles at level zoom_target.
+    """
     coords = list()
     ratio = 2 ** (zoom_target - zoom_current)
     for x, y in tiles:
@@ -1019,13 +1016,13 @@ def filter_tileset_with_db(tileset, db, zoom):
     """
     db_tiles = db.list_tiles((zoom,))
     tileset = set(db_tiles).intersection(tileset)
-    return tileset, len(tileset)
+    return tileset
 
 
 def filter_tileset_with_zoom(tileset, zoom):
     # maybe useful
     tileset = [tile for tile in tileset if tile[2] == zoom]
-    return tileset, len(tileset)
+    return tileset
 
 
 # track and contour tile generators
@@ -1139,17 +1136,15 @@ def tile_list_generate_level(options, generator, source, zoom, radius, db_source
         # no subdivision required
         gen0 = generator(options, source, zoom, radius)
         gen = ((x, y, zoom) for x, y in gen0)
-        size = len(gen0)
     else:
         # prepare tile coordinates for subdivision
         gen0 = generator(options, source, options.zoom_limit, radius)
         gen = subdivise(gen0, options.zoom_limit, zoom)
-        size = len(gen0) * sqr(2 ** (zoom - options.zoom_limit))
 
     if db_filter:
-        tileset, size = filter_tileset_with_db(gen, db_source, zoom)
+        tileset = filter_tileset_with_db(gen, db_source, zoom)
     else:
-        tileset, size = gen, size
+        tileset = gen
 
     return TileSet(tileset)
 
@@ -1158,7 +1153,8 @@ def tile_list_generate_level(options, generator, source, zoom, radius, db_source
 
 
 def tile_project_generator(options, project, zoom, radius, db_source, db_filter):
-    """Process each line in project handling intersection of -inside, -zoom and
+    """
+    Process each line in project handling intersection of -inside, -zoom and
     -radius parameters.
     """
     if isinstance(radius, list):
@@ -1237,17 +1233,12 @@ def coord_tiles_generator(options, source, zooms, radius, db_source, db_filter):
         zoom = zooms[0]
 
     xmin, ymin, xmax, ymax = options.coord_tiles
-
-    # gen is a generator not a list, because we do not want to store a very
-    # large set before filtering against db
-    # TODO check
     gen = ((x, y, zoom) for x in range(xmin, xmax + 1) for y in range(ymin, ymax + 1))
-    size = (xmax - xmin + 1) * (ymax - ymin + 1)
 
     if options.inside:
-        tileset, size = filter_tileset_with_db(gen, db_source, zoom)
+        tileset = filter_tileset_with_db(gen, db_source, zoom)
     else:
-        tileset, size = gen, size
+        tileset = gen
 
     return TileSet(tileset)
 
@@ -1260,15 +1251,15 @@ def tileset(options, db, db_filter=False):
     """
     try:
         if options.db_tiles:
-            generator, source, zoom, radius = options_generate(options)
+            _, source, zoom, radius = options_generate(options)
             return db_tiles_generator(options, source, zoom, radius, db)
 
         elif options.coord_tiles:
-            generator, source, zoom, radius = options_generate(options)
+            _, source, zoom, radius = options_generate(options)
             return coord_tiles_generator(options, source, zoom, radius, db, db_filter)
 
         elif options.project:
-            generator, source, zoom, radius = options_generate(options)
+            _, source, zoom, radius = options_generate(options)
             return tile_project_generator(options, source, zoom, radius, db, db_filter)
 
         else:
@@ -1588,7 +1579,7 @@ class FolderDatabase(TileDatabase):
             try:
                 os.remove(filename)
                 return True
-            except WindowsError as e:
+            except WindowsError:
                 return False
         else:
             return True
@@ -2154,7 +2145,7 @@ def delete_tile(tiles, db, x, y, zoom, options, index, size, counters):
 def do_makeview(db_name, options):
     db = db_factory(db_name)
 
-    generator, source, zoom, radius = options_generate(options)
+    _, source, zoom, radius = options_generate(options)
     if len(zoom) > 1:
         error('view does not apply to multiple zoom levels')
     else:
