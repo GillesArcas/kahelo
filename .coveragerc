@@ -8,7 +8,8 @@
 [report]
 # omit =
 
-include =kahelo/kahelo.py
+include =
+    kahelo/kahelo.py
 
 exclude_lines =
     not used
