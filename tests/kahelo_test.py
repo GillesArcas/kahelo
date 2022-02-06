@@ -16,7 +16,7 @@ def main():
         print(__doc__)
         exit(1)
 
-    db_name = 'tests/easter.db'
+    db_name = 'easter.db'
 
     if os.name == 'nt':
         mode = 4
@@ -40,7 +40,7 @@ def main():
         shell = True
         creationflags = subprocess.CREATE_NEW_CONSOLE
 
-    p = subprocess.Popen('python ./kahelo.py -server tests/easter.db', shell=shell, creationflags=creationflags)
+    p = subprocess.Popen('python kahelo -server easter.db', shell=shell, creationflags=creationflags)
     url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
 
     # make sure tests are done with known configuration
@@ -321,8 +321,8 @@ def test_db(url, db_format, tile_format, db_dest_format, tile_dest_format, trace
 
 
 def test_view():
-    view_to_png = '-view tests/easter.db -zoom 12 -project test.project -image test.png'
-    view_to_jpg = '-view tests/easter.db -zoom 12 -project test.project -image test.jpg'
+    view_to_png = '-view easter.db -zoom 12 -project test.project -image test.png'
+    view_to_jpg = '-view easter.db -zoom 12 -project test.project -image test.jpg'
 
     kahelo.resetconfig()
     kahelo.setconfig('view', 'draw_tracks', 'False')
@@ -330,33 +330,33 @@ def test_view():
     kahelo.setconfig('view', 'draw_tile_width', 'False')
     kahelo.setconfig('view', 'draw_circles', 'False')
     kahelo.kahelo(view_to_png)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12a.png'), 'test.png'))
+    check('check view 1', compare_files('easter12a.png', 'test.png'))
     kahelo.kahelo(view_to_jpg)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12a.jpg'), 'test.jpg'))
+    check('check view 1', compare_files('easter12a.jpg', 'test.jpg'))
 
     kahelo.setconfig('view', 'draw_tracks', 'True')
     kahelo.kahelo(view_to_png)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12b.png'), 'test.png'))
+    check('check view 1', compare_files('easter12b.png', 'test.png'))
     kahelo.kahelo(view_to_jpg)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12b.jpg'), 'test.jpg'))
+    check('check view 1', compare_files('easter12b.jpg', 'test.jpg'))
 
     kahelo.setconfig('view', 'draw_tile_limits', 'True')
     kahelo.kahelo(view_to_png)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12c.png'), 'test.png'))
+    check('check view 1', compare_files('easter12c.png', 'test.png'))
     kahelo.kahelo(view_to_jpg)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12c.jpg'), 'test.jpg'))
+    check('check view 1', compare_files('easter12c.jpg', 'test.jpg'))
 
     kahelo.setconfig('view', 'draw_tile_width', 'True')
     kahelo.kahelo(view_to_png)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12d.png'), 'test.png'))
+    check('check view 1', compare_files('easter12d.png', 'test.png'))
     kahelo.kahelo(view_to_jpg)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12d.jpg'), 'test.jpg'))
+    check('check view 1', compare_files('easter12d.jpg', 'test.jpg'))
 
     kahelo.setconfig('view', 'draw_circles', 'True')
     kahelo.kahelo(view_to_png)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12e.png'), 'test.png'))
+    check('check view 1', compare_files('easter12e.png', 'test.png'))
     kahelo.kahelo(view_to_jpg)
-    check('check view 1', compare_files(os.path.join('tests', 'easter12e.jpg'), 'test.jpg'))
+    check('check view 1', compare_files('easter12e.jpg', 'test.jpg'))
 
     os.remove('test.png')
     os.remove('test.jpg')
@@ -366,13 +366,13 @@ def test_stat():
     temp = sys.stdout
     with open('test.txt', 'wt') as sys.stdout:
         try:
-            kahelo.kahelo('-stat ./tests/easter.db -quiet -records')
-            kahelo.kahelo('-stat ./tests/easter.db -quiet -project test.project')
-            kahelo.kahelo('-stat ./tests/easter.db -quiet -track test.gpx -zoom 10-11')
-            kahelo.kahelo('-stat ./tests/easter.db -quiet -track test2.gpx -zoom 10-12')
+            kahelo.kahelo('-stat easter.db -quiet -records')
+            kahelo.kahelo('-stat easter.db -quiet -project test.project')
+            kahelo.kahelo('-stat easter.db -quiet -track test.gpx -zoom 10-11')
+            kahelo.kahelo('-stat easter.db -quiet -track test2.gpx -zoom 10-12')
         finally:
             sys.stdout = temp
-    check('check stat', compare_texts('tests/test_stat.txt', 'test.txt'))
+    check('check stat', compare_texts('test_stat.txt', 'test.txt'))
     os.remove('test.txt')
 
 
@@ -429,14 +429,14 @@ def test_inside():
     with open('test.txt', 'wt') as sys.stdout:
         try:
             # define tile coordinates of the test database
-            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3210,9471,3221,9479')
+            kahelo.kahelo('-count easter.db -quiet -zoom 14 -tiles 3210,9471,3221,9479')
             # one tile more on each side
-            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3209,9470,3222,9480')
+            kahelo.kahelo('-count easter.db -quiet -zoom 14 -tiles 3209,9470,3222,9480')
             # limiting to content, should be the same as first count
-            kahelo.kahelo('-count ./tests/easter.db -quiet -zoom 14 -tiles 3209,9470,3222,9480 -inside')
+            kahelo.kahelo('-count easter.db -quiet -zoom 14 -tiles 3209,9470,3222,9480 -inside')
         finally:
             sys.stdout = temp
-    check('check inside', compare_texts('tests/test_inside.txt', 'test.txt'))
+    check('check inside', compare_texts('test_inside.txt', 'test.txt'))
     os.remove('test.txt')
 
 
@@ -459,7 +459,7 @@ def test_overlapping_gpx():
         finally:
             sys.stdout = temp
 
-    check('check overlapping', compare_texts('tests/test_overlapping.txt', 'test.txt'))
+    check('check overlapping', compare_texts('test_overlapping.txt', 'test.txt'))
     os.remove('test.txt')
 
 
@@ -470,21 +470,25 @@ def test_radius():
     temp = sys.stdout
     with open('test.txt', 'wt') as sys.stdout:
         try:
-            kahelo.kahelo('-stat tests/easter.db -track test.gpx -zoom 0-10,11-12,13,14 -radius 100,10,5,2 -quiet')
+            kahelo.kahelo('-stat easter.db -track test.gpx -zoom 0-10,11-12,13,14 -radius 100,10,5,2 -quiet')
         finally:
             sys.stdout = temp
-    check('check radius 1', compare_texts('tests/test_radius.txt', 'test.txt'))
+    check('check radius 1', compare_texts('test_radius.txt', 'test.txt'))
 
     with open('test.txt', 'wt') as sys.stdout:
         try:
-            kahelo.kahelo('-stat tests/easter.db -project test3.project -quiet')
+            kahelo.kahelo('-stat easter.db -project test3.project -quiet')
         finally:
             sys.stdout = temp
-    check('check radius 2', compare_texts('tests/test_radius.txt', 'test.txt'))
+    check('check radius 2', compare_texts('test_radius.txt', 'test.txt'))
 
 
     os.remove('test.txt')
 
 
-if __name__ == '__main__':
+try:
+    current_path = os.path.abspath(os.getcwd())
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
     main()
+finally:
+    os.chdir(current_path)
