@@ -13,7 +13,7 @@ before_script:
 
 script:
   # - python tests/kahelo_test.py
-  - coverage run tests/kahelo_test.py abort
+  - coverage run tests/kahelo_test.py
 
 after_success:
   - coveralls
