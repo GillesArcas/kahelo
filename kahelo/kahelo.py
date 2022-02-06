@@ -91,6 +91,7 @@ tileset:
   -tracks <track_filename> -zoom <zoom_level> [-radius <in kilometers>]
   -contour <track_filename> -zoom <zoom_level> [-radius <in kilometers>]
   -contours <track_filename> -zoom <zoom_level> [-radius <in kilometers>]
+  -disk <point coordinates>
   -project <project_filename>
   -records [-zoom <zoom_level>]
   -tiles xmin,ymin,xmax,ymax -zoom <zoom_level>
