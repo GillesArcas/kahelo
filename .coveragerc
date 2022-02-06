@@ -1,0 +1,16 @@
+# coverage configuration file
+
+[run]
+#omit =
+#    # remove site.py from coveralls reports
+#    */lib/*
+
+[report]
+# omit =
+
+include =
+    */kahelo.py
+    */kahelo_test.py
+
+exclude_lines =
+    not used
