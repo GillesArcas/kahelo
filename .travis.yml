@@ -12,8 +12,8 @@ before_script:
   - chmod +x tests/kahelo_test.py
 
 script:
-  # - python tests/kahelo_test.py
-  - coverage run tests/kahelo_test.py abort
+  - python tests/kahelo_test.py
+  # - coverage run tests/kahelo_test.py abort
 
 after_success:
   - coveralls
