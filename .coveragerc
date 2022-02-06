@@ -5,11 +5,11 @@
 #    # remove site.py from coveralls reports
 #    */lib/*
 
+source =
+    kahelo
+
 [report]
 # omit =
-
-include =
-    kahelo/kahelo.py
 
 exclude_lines =
     not used
