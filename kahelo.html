@@ -317,17 +317,33 @@ http://otile[1234].mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.jpg</pre>
 
     <p>
         Tile sets are used in all commands to describe the tiles to work on. A
-        set of tiles may be specified with:
+        set of tiles is specified with a source and additional parameters. The
+        source can be:
     </p>
     <ul>
         <li>
-            A source, which can be a gpx file used as a track or a contour
-            (<code>-track</code>, <code>-tracks</code>, <code>-contour</code>,
-            <code>-contours</code>), a project (a file of tile descriptions,
-            <code>-project</code>), the tiles already in the database
-            (<code>-records</code>), or the tiles inside a rectangle specified
-            in tile units (<code>-tiles</code>),
+            a gpx file used as a track or a contour (<code>-track</code>,
+            <code>-tracks</code>, <code>-contour</code>, <code>-contours</code>),
         </li>
+        <li>
+            a disk defined by its centre (<code>-disk</code>),
+        </li>
+        <li>
+            the tiles inside a rectangle specified in tile units
+            (<code>-tiles</code>),
+        </li>
+        <li>
+            a project, i.e. a file of tile set descriptions (<code>-project</code>),
+        </li>
+        <li>
+            the tiles already in the database (<code>-records</code>).
+        </li>
+    </ul>
+    <p>
+        The following parameters complete the specification of the tiles to
+        take into account:
+    </p>
+    <ul>
         <li>
             a zoom level or set of zoom levels (<code>-zoom</code>),
         </li>
