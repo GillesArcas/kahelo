@@ -120,8 +120,9 @@ class ArgumentParser(argparse.ArgumentParser):
         group.add_argument('-license', action='store_true', help='display text of license', dest='do_license')
         group.add_argument('-help',    action='store_true', help='show this help message',  dest='do_help')
         group.add_argument('-Help',    action='store_true', help='open html help page',     dest='do_helphtml')
-        group.add_argument('-verbose', action='store_true', help='detailed feedback',       dest='verbose')
-        group.add_argument('-quiet',   action='store_true', help='minimal feefback',        dest='quiet')
+        group.add_argument('-verbose', action='store',      help='detailed feedback',       dest='verbose',
+                           nargs='?', const=3, default=None)
+        group.add_argument('-quiet',   action='store_true', help='minimal feedback',        dest='quiet')
 
         agroup = self.add_argument_group('Commands')
         xgroup = agroup.add_mutually_exclusive_group()
@@ -185,6 +186,14 @@ class ArgumentParser(argparse.ArgumentParser):
             options.db_format = options.db_format.upper()
         if options.tile_format is not None:
             options.tile_format = options.tile_format.upper()
+
+        # verbosity
+        if options.quiet:
+            options.verbosity = 0
+        elif not options.verbose:
+            options.verbosity = 1
+        else:
+            options.verbosity = int(options.verbose)
 
         # add db_name attribute
         options.db_name = (options.db_describe or options.db_count  or
@@ -277,7 +286,8 @@ class ProjectParser(argparse.ArgumentParser):
         self.add_argument('-zoom'     , action='store', dest='zoom')
         self.add_argument('-radius'   , action='store', dest='radius')
         self.add_argument('-inside'   , action='store_true', dest='inside')
-        self.add_argument('-verbose', action='store_true', dest='verbose')
+        group.add_argument('-verbose', action='store', dest='verbose',
+                           nargs='?', const=3, default=None)
         self.add_argument('-quiet',   action='store_true', dest='quiet')
 
     def error(self, msg):
@@ -285,6 +295,15 @@ class ProjectParser(argparse.ArgumentParser):
 
     def parse_args(self, arglist):
         options = argparse.ArgumentParser.parse_args(self, arglist)
+
+        # verbosity
+        if options.quiet:
+            options.verbosity = 0
+        elif options.verbose is None:
+            options.verbosity = 1
+        else:
+            options.verbosity = int(options.verbose)
+
         complete_source(options)
         return options
 
@@ -1115,7 +1134,7 @@ def tile_list_generator(options, db_source, db_filter):
     Return dedicated iterator with total and reduced lengths.
     """
     generator, source, zooms, radius = options_generate(options)
-    if options.quiet is False:
+    if options.verbosity > 0:
         print(source)
 
     tile_set = TileSet()
@@ -1164,8 +1183,10 @@ def tile_project_generator(options, project, zoom, radius, db_source, db_filter)
     tile_set = TileSet()
     for options_ in project_options(options):
         options_.inside = options.inside or options_.inside
-        options_.quiet = options.quiet or options_.quiet
-        options_.verbose = options.verbose or options_.verbose
+
+        if not(options_.quiet or options_.verbose):
+            options_.verbosity = options.verbosity
+
         if zoom is not None:
             options_.zoom = list(sorted(set(zoom).intersection(set(options_.zoom))))
         if radius is not None:
@@ -1714,17 +1735,17 @@ class TileCounters:
 
 
 def tile_trace(options, x, y, zoom, index, size, msg, counters=None):
-    if options.verbose:
-        tile_message(x, y, zoom, index, size, msg, counters)
-    elif options.quiet:
+    if options.verbosity == 0:
         pass
-    else:
+    elif options.verbosity == 1:
         num = index + 1
         pc1 = 100.0 * (num - 1) / size
         pc2 = 100.0 * num / size
         pc3 = math.floor(pc2)
         if pc1 < pc3:
             print('Tiles %.0f%% (%d/%d)' % (pc3, num, size))
+    elif (options.verbosity == 2 and 'already' not in msg) or options.verbosity == 3:
+        tile_message(x, y, zoom, index, size, msg, counters)
 
 
 def tile_message(x, y, zoom, index, size, msg, counters=None):
@@ -1904,8 +1925,7 @@ def do_insert(db_name, options):
     tiles = tileset(options, db, db_filter=options.inside)
 
     options_ = copy.copy(options)
-    options_.verbose = False
-    options_.quiet = True
+    options_.verbosity = 0
     size, inserted, expired, missing = count_tileset(tiles, db, options_)
 
     n = tiles.size()
@@ -1918,7 +1938,7 @@ def do_insert(db_name, options):
     finally:
         # final commit even if interrupted by user
         db.commit()
-        if options.verbose:
+        if options.verbosity >= 2:
             print('Commit.')
         display_report(options, ('Tiles in set', n),
                                 ('Already present', counters.ignored),
@@ -1979,7 +1999,7 @@ def insert_tile(tiles, db, options, x, y, zoom, index, n, counters):
         tile_trace(options, x, y, zoom, index, n, '%s : %s' % (url, msg), counters)
         if counters.inserted % options.database.commit_period == 0:
             db.commit()
-            if options.verbose:
+            if options.verbosity >= 2:
                 print('Commit.')
 
 

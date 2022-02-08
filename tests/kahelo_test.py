@@ -75,6 +75,7 @@ def main():
         test_inside()
         test_overlapping_gpx()
         test_radius()
+        test_trace()
 
         if test_result is True:
             print('All tests ok.')
@@ -220,8 +221,12 @@ def compare_texts(name1, name2):
     with open(name2) as f:
         lines2 = f.read().splitlines()
 
-    lines1 = filter(lambda line: not line.startswith('Elapsed'), lines1)
-    lines2 = filter(lambda line: not line.startswith('Elapsed'), lines2)
+    lines1 = list(filter(lambda line: not line.startswith('Elapsed'), lines1))
+    lines2 = list(filter(lambda line: not line.startswith('Elapsed'), lines2))
+
+    if len(lines1) != len(lines2):
+        print('Number of lines is different in file %s and file %s' % (name1, name2))
+        return False
 
     for index, (line1, line2) in enumerate(zip(lines1, lines2)):
         if line1 != line2:
@@ -465,6 +470,7 @@ def test_overlapping_gpx():
             kahelo.kahelo('-delete test.db -records')
             kahelo.kahelo('-insert test.db -project test2.project -verbose')
         finally:
+            db.close()
             sys.stdout = temp
 
     check('check overlapping', compare_texts('test_overlapping.txt', 'test.txt'))
@@ -491,6 +497,41 @@ def test_radius():
     check('check radius 2', compare_texts('test_radius.txt', 'test.txt'))
 
 
+    os.remove('test.txt')
+
+
+def test_trace():
+    """
+    """
+    temp = sys.stdout
+    with open('test.txt', 'wt') as sys.stdout:
+        try:
+            remove_db('test.db')
+            url = kahelo.server_url() + '/{zoom}/{x}/{y}.jpg'
+            kahelo.kahelo('-describe test.db  -db rmaps -tile_f server -url %s' % url)
+            db = kahelo.db_factory('test.db')
+            print('-' * 40, '-verbose=0')
+            kahelo.kahelo('-insert test.db -track test.gpx -zoom 13 -verbose=0')
+            kahelo.kahelo('-insert test.db -track test3.gpx -zoom 13 -verbose=0')
+            kahelo.kahelo('-delete test.db -records -quiet')
+            print('-' * 40, '-verbose=1')
+            kahelo.kahelo('-insert test.db -track test.gpx -zoom 13 -verbose=1')
+            kahelo.kahelo('-insert test.db -track test3.gpx -zoom 13 -verbose=1')
+            kahelo.kahelo('-delete test.db -records -quiet')
+            print('-' * 40, '-verbose=2')
+            kahelo.kahelo('-insert test.db -track test.gpx -zoom 13 -verbose=2')
+            kahelo.kahelo('-insert test.db -track test3.gpx -zoom 13 -verbose=2')
+            kahelo.kahelo('-delete test.db -records -quiet')
+            print('-' * 40, '-verbose=3')
+            kahelo.kahelo('-insert test.db -track test.gpx -zoom 13 -verbose=3')
+            kahelo.kahelo('-insert test.db -track test3.gpx -zoom 13 -verbose=3')
+            kahelo.kahelo('-delete test.db -records -quiet')
+            print('-' * 40)
+        finally:
+            db.close()
+            sys.stdout = temp
+
+    check('check trace', compare_texts('test_trace.txt', 'test.txt'))
     os.remove('test.txt')
 
 

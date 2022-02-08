@@ -1,0 +1,208 @@
+db_name      test.db
+db_format    RMAPS
+tile_format  SERVER
+url_template http://127.0.0.1:8000/{zoom}/{x}/{y}.jpg
+---------------------------------------- -verbose=0
+-----------------------------
+Tiles in set               23
+Already present             0
+Inserted                   21
+Missing                     2
+Elapsed time         00:00:02
+-----------------------------
+Tiles in set               22
+Already present            18
+Inserted                    2
+Missing                     2
+Elapsed time         00:00:00
+-----------------------------
+Tiles in set               23
+Deleted                    23
+Failure                     0
+Missing                     0
+Elapsed time         00:00:00
+---------------------------------------- -verbose=1
+test.gpx
+Tiles 4% (1/23)
+Tiles 8% (2/23)
+Tiles 13% (3/23)
+Tiles 17% (4/23)
+Tiles 21% (5/23)
+Tiles 26% (6/23)
+Tiles 30% (7/23)
+Tiles 34% (8/23)
+Tiles 39% (9/23)
+Tiles 43% (10/23)
+Tiles 47% (11/23)
+Tiles 52% (12/23)
+Tiles 56% (13/23)
+Tiles 60% (14/23)
+Tiles 65% (15/23)
+Tiles 69% (16/23)
+Tiles 73% (17/23)
+Tiles 78% (18/23)
+Tiles 82% (19/23)
+Tiles 86% (20/23)
+Tiles 91% (21/23)
+Tiles 95% (22/23)
+Tiles 100% (23/23)
+-----------------------------
+Tiles in set               23
+Already present             0
+Inserted                   21
+Missing                     2
+Elapsed time         00:00:02
+test3.gpx
+Tiles 4% (1/22)
+Tiles 9% (2/22)
+Tiles 13% (3/22)
+Tiles 18% (4/22)
+Tiles 22% (5/22)
+Tiles 27% (6/22)
+Tiles 31% (7/22)
+Tiles 36% (8/22)
+Tiles 40% (9/22)
+Tiles 45% (10/22)
+Tiles 50% (11/22)
+Tiles 54% (12/22)
+Tiles 59% (13/22)
+Tiles 63% (14/22)
+Tiles 68% (15/22)
+Tiles 72% (16/22)
+Tiles 77% (17/22)
+Tiles 81% (18/22)
+Tiles 86% (19/22)
+Tiles 90% (20/22)
+Tiles 95% (21/22)
+Tiles 100% (22/22)
+-----------------------------
+Tiles in set               22
+Already present            18
+Inserted                    2
+Missing                     2
+Elapsed time         00:00:00
+-----------------------------
+Tiles in set               23
+Deleted                    23
+Failure                     0
+Missing                     0
+Elapsed time         00:00:00
+---------------------------------------- -verbose=2
+test.gpx
+Tile (1604,4738,13) 1/23: http://127.0.0.1:8000/13/1604/4738.jpg : not found
+Tile (1604,4739,13) 2/23: http://127.0.0.1:8000/13/1604/4739.jpg : not found
+Tile (1605,4736,13) 3/23: http://127.0.0.1:8000/13/1605/4736.jpg : inserted (1/23)
+Tile (1605,4737,13) 4/23: http://127.0.0.1:8000/13/1605/4737.jpg : inserted (2/23)
+Tile (1605,4738,13) 5/23: http://127.0.0.1:8000/13/1605/4738.jpg : inserted (3/23)
+Tile (1605,4739,13) 6/23: http://127.0.0.1:8000/13/1605/4739.jpg : inserted (4/23)
+Tile (1606,4735,13) 7/23: http://127.0.0.1:8000/13/1606/4735.jpg : inserted (5/23)
+Tile (1606,4736,13) 8/23: http://127.0.0.1:8000/13/1606/4736.jpg : inserted (6/23)
+Tile (1606,4737,13) 9/23: http://127.0.0.1:8000/13/1606/4737.jpg : inserted (7/23)
+Tile (1606,4738,13) 10/23: http://127.0.0.1:8000/13/1606/4738.jpg : inserted (8/23)
+Tile (1606,4739,13) 11/23: http://127.0.0.1:8000/13/1606/4739.jpg : inserted (9/23)
+Tile (1607,4735,13) 12/23: http://127.0.0.1:8000/13/1607/4735.jpg : inserted (10/23)
+Tile (1607,4736,13) 13/23: http://127.0.0.1:8000/13/1607/4736.jpg : inserted (11/23)
+Tile (1607,4737,13) 14/23: http://127.0.0.1:8000/13/1607/4737.jpg : inserted (12/23)
+Tile (1607,4738,13) 15/23: http://127.0.0.1:8000/13/1607/4738.jpg : inserted (13/23)
+Tile (1607,4739,13) 16/23: http://127.0.0.1:8000/13/1607/4739.jpg : inserted (14/23)
+Tile (1608,4737,13) 17/23: http://127.0.0.1:8000/13/1608/4737.jpg : inserted (15/23)
+Tile (1608,4738,13) 18/23: http://127.0.0.1:8000/13/1608/4738.jpg : inserted (16/23)
+Tile (1609,4736,13) 19/23: http://127.0.0.1:8000/13/1609/4736.jpg : inserted (17/23)
+Tile (1609,4737,13) 20/23: http://127.0.0.1:8000/13/1609/4737.jpg : inserted (18/23)
+Tile (1609,4738,13) 21/23: http://127.0.0.1:8000/13/1609/4738.jpg : inserted (19/23)
+Tile (1610,4736,13) 22/23: http://127.0.0.1:8000/13/1610/4736.jpg : inserted (20/23)
+Tile (1610,4737,13) 23/23: http://127.0.0.1:8000/13/1610/4737.jpg : inserted (21/23)
+Commit.
+-----------------------------
+Tiles in set               23
+Already present             0
+Inserted                   21
+Missing                     2
+Elapsed time         00:00:01
+test3.gpx
+Tile (1604,4738,13) 1/22: http://127.0.0.1:8000/13/1604/4738.jpg : not found
+Tile (1604,4739,13) 2/22: http://127.0.0.1:8000/13/1604/4739.jpg : not found
+Tile (1608,4735,13) 14/22: http://127.0.0.1:8000/13/1608/4735.jpg : inserted (1/4)
+Tile (1608,4736,13) 15/22: http://127.0.0.1:8000/13/1608/4736.jpg : inserted (2/4)
+Commit.
+-----------------------------
+Tiles in set               22
+Already present            18
+Inserted                    2
+Missing                     2
+Elapsed time         00:00:00
+-----------------------------
+Tiles in set               23
+Deleted                    23
+Failure                     0
+Missing                     0
+Elapsed time         00:00:00
+---------------------------------------- -verbose=3
+test.gpx
+Tile (1604,4738,13) 1/23: http://127.0.0.1:8000/13/1604/4738.jpg : not found
+Tile (1604,4739,13) 2/23: http://127.0.0.1:8000/13/1604/4739.jpg : not found
+Tile (1605,4736,13) 3/23: http://127.0.0.1:8000/13/1605/4736.jpg : inserted (1/23)
+Tile (1605,4737,13) 4/23: http://127.0.0.1:8000/13/1605/4737.jpg : inserted (2/23)
+Tile (1605,4738,13) 5/23: http://127.0.0.1:8000/13/1605/4738.jpg : inserted (3/23)
+Tile (1605,4739,13) 6/23: http://127.0.0.1:8000/13/1605/4739.jpg : inserted (4/23)
+Tile (1606,4735,13) 7/23: http://127.0.0.1:8000/13/1606/4735.jpg : inserted (5/23)
+Tile (1606,4736,13) 8/23: http://127.0.0.1:8000/13/1606/4736.jpg : inserted (6/23)
+Tile (1606,4737,13) 9/23: http://127.0.0.1:8000/13/1606/4737.jpg : inserted (7/23)
+Tile (1606,4738,13) 10/23: http://127.0.0.1:8000/13/1606/4738.jpg : inserted (8/23)
+Tile (1606,4739,13) 11/23: http://127.0.0.1:8000/13/1606/4739.jpg : inserted (9/23)
+Tile (1607,4735,13) 12/23: http://127.0.0.1:8000/13/1607/4735.jpg : inserted (10/23)
+Tile (1607,4736,13) 13/23: http://127.0.0.1:8000/13/1607/4736.jpg : inserted (11/23)
+Tile (1607,4737,13) 14/23: http://127.0.0.1:8000/13/1607/4737.jpg : inserted (12/23)
+Tile (1607,4738,13) 15/23: http://127.0.0.1:8000/13/1607/4738.jpg : inserted (13/23)
+Tile (1607,4739,13) 16/23: http://127.0.0.1:8000/13/1607/4739.jpg : inserted (14/23)
+Tile (1608,4737,13) 17/23: http://127.0.0.1:8000/13/1608/4737.jpg : inserted (15/23)
+Tile (1608,4738,13) 18/23: http://127.0.0.1:8000/13/1608/4738.jpg : inserted (16/23)
+Tile (1609,4736,13) 19/23: http://127.0.0.1:8000/13/1609/4736.jpg : inserted (17/23)
+Tile (1609,4737,13) 20/23: http://127.0.0.1:8000/13/1609/4737.jpg : inserted (18/23)
+Tile (1609,4738,13) 21/23: http://127.0.0.1:8000/13/1609/4738.jpg : inserted (19/23)
+Tile (1610,4736,13) 22/23: http://127.0.0.1:8000/13/1610/4736.jpg : inserted (20/23)
+Tile (1610,4737,13) 23/23: http://127.0.0.1:8000/13/1610/4737.jpg : inserted (21/23)
+Commit.
+-----------------------------
+Tiles in set               23
+Already present             0
+Inserted                   21
+Missing                     2
+Elapsed time         00:00:01
+test3.gpx
+Tile (1604,4738,13) 1/22: http://127.0.0.1:8000/13/1604/4738.jpg : not found
+Tile (1604,4739,13) 2/22: http://127.0.0.1:8000/13/1604/4739.jpg : not found
+Tile (1605,4738,13) 3/22: already in database
+Tile (1605,4739,13) 4/22: already in database
+Tile (1606,4735,13) 5/22: already in database
+Tile (1606,4736,13) 6/22: already in database
+Tile (1606,4738,13) 7/22: already in database
+Tile (1606,4739,13) 8/22: already in database
+Tile (1607,4735,13) 9/22: already in database
+Tile (1607,4736,13) 10/22: already in database
+Tile (1607,4737,13) 11/22: already in database
+Tile (1607,4738,13) 12/22: already in database
+Tile (1607,4739,13) 13/22: already in database
+Tile (1608,4735,13) 14/22: http://127.0.0.1:8000/13/1608/4735.jpg : inserted (1/4)
+Tile (1608,4736,13) 15/22: http://127.0.0.1:8000/13/1608/4736.jpg : inserted (2/4)
+Tile (1608,4737,13) 16/22: already in database
+Tile (1608,4738,13) 17/22: already in database
+Tile (1609,4736,13) 18/22: already in database
+Tile (1609,4737,13) 19/22: already in database
+Tile (1609,4738,13) 20/22: already in database
+Tile (1610,4736,13) 21/22: already in database
+Tile (1610,4737,13) 22/22: already in database
+Commit.
+-----------------------------
+Tiles in set               22
+Already present            18
+Inserted                    2
+Missing                     2
+Elapsed time         00:00:00
+-----------------------------
+Tiles in set               23
+Deleted                    23
+Failure                     0
+Missing                     0
+Elapsed time         00:00:00
+----------------------------------------
