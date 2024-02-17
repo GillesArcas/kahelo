@@ -272,6 +272,9 @@ def complete_source(options):
 
 
 class ProjectParser(argparse.ArgumentParser):
+    """
+    Parser dedicated to the lines inside a project file.
+    """
     def __init__(self):
         argparse.ArgumentParser.__init__(self)
         group = self.add_mutually_exclusive_group()
@@ -286,7 +289,7 @@ class ProjectParser(argparse.ArgumentParser):
         self.add_argument('-zoom'     , action='store', dest='zoom')
         self.add_argument('-radius'   , action='store', dest='radius')
         self.add_argument('-inside'   , action='store_true', dest='inside')
-        group.add_argument('-verbose', action='store', dest='verbose',
+        self.add_argument('-verbose', action='store', dest='verbose',
                            nargs='?', const=3, default=None)
         self.add_argument('-quiet',   action='store_true', dest='quiet')
 
@@ -1068,12 +1071,12 @@ def tile_disk_generator(options, point_spec, zoom, radius):
     # returns list of tiles for disk
 
     # convert coordinates, ignore from third element allowing to add comment in command line
-    x, y, *_ = point_spec.split(',')
+    x, y, *_ = point_spec.replace('"','').split(',')
     try:
         x = float(x)
         y = float(y)
     except ValueError:
-        error('point coordinates must be float')
+        error(f'point coordinates must be float: ({x}, {y})')
 
     segment = [deg2tilecoord(lat, lon, zoom) for lat,lon in [(x, y), (x, y)]]
     segments = [segment]
